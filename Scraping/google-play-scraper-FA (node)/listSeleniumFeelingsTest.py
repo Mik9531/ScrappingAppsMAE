@@ -11,6 +11,8 @@ from nltk.stem import PorterStemmer
 # from wordcloud import WordCloud, STOPWORDS
 from textblob import TextBlob
 import json
+from deep_translator import GoogleTranslator
+from nltk.tokenize.treebank import TreebankWordDetokenizer
 
 dataUca = reviews_all(
   'net.universia.uca',
@@ -20,14 +22,14 @@ dataUca = reviews_all(
   sort=Sort.MOST_RELEVANT,  # defaults to Sort.MOST_RELEVANT
 )
 
-reviewsUca = []
-namesUca = []
-scoresUca = []
-thumbsUpUca = []
-createdUca = []
-reviewCreatedUca = []
-
-allReviewsTotal = dict()
+# reviewsUca = []
+# namesUca = []
+# scoresUca = []
+# thumbsUpUca = []
+# createdUca = []
+# reviewCreatedUca = []
+#
+# allReviewsTotal = dict()
 
 # for currentReview in dataUca:
 # currentReview['content'] = (currentReview['content'].encode('latin-1', 'replace').decode('latin-1'))
@@ -38,10 +40,20 @@ allReviewsTotal = dict()
 # reviewCreatedUca.append(currentReview['reviewCreatedVersion'])
 
 
+# TRADUCCIÓN DE TEXTOS
+
+for currentReview in dataUca:
+  currentReview['content'] = (currentReview['content'].encode('latin-1', 'replace').decode('latin-1'))
+  traductor = GoogleTranslator(source='auto', target='en')
+  currentReview['content'] = traductor.translate(currentReview['content'])
+
+# print(resultado)
+
 df = pd.DataFrame(dataUca)
 
 df = df[["userName", "at", "thumbsUpCount", "content", "reviewCreatedVersion", "score"]]
 
+# UTILIDADES
 
 # Comprobamos que no haya valores que falten
 # check_total_none = df.isnull().sum()
@@ -74,11 +86,6 @@ df = df[["userName", "at", "thumbsUpCount", "content", "reviewCreatedVersion", "
 # prof.to_file(output_file='output.html')
 
 
-# TRADUCCIÓN DE TEXTOS
-
-
-
-
 # PREPROCESAMIENTO DE DATOS
 
 
@@ -87,14 +94,32 @@ df = df[["userName", "at", "thumbsUpCount", "content", "reviewCreatedVersion", "
 # Cambiamos a string las reviews
 df['content'] = df['content'].astype(str)
 # Ej: Antes de convertir a minúsculas
-print(df['content'][2])
+# print(df['content'][2])
 # Después de convertir todas a minúsculas
 df['content'] = df['content'].apply(lambda x: x.lower())
-print(df['content'][2])
+# print(df['content'][2])
+
+# Stop Words
+
+stop_words = set(stopwords.words('english'))
+listSentence = []
+
+for currentSentence in df['content']:
+  word_tokens = word_tokenize(currentSentence)
+
+  filtered_sentence = []
+
+  for w in word_tokens:
+    if w not in stop_words:
+      filtered_sentence.append(w)
+
+  listSentence.append(TreebankWordDetokenizer().detokenize(filtered_sentence))
+
+df['content'] = listSentence
 
 # Chequeamos si hay caracteres especiales
 alphabet = string.ascii_letters + string.punctuation
-print(df.content.str.strip(alphabet).astype(bool).any())
+# print(df.content.str.strip(alphabet).astype(bool).any())
 
 extracted_emojis = []
 
@@ -105,31 +130,41 @@ def extract_emojis(s):
   return expe.sub(r'', s)
 
 
-for y in df['content']:
+for currentSentence in df['content']:
   # print(str(extract_emojis(y)))
-  extracted_emojis.append(str(extract_emojis(y)))
-print(extracted_emojis)
-
-# stop words
-
-stop_words = stopwords.words('spanish')
-df['extracted_emojis'] = extracted_emojis
-print(df['extracted_emojis'][1])
-
-df['extracted_emojis'] = df['extracted_emojis'].apply(lambda x: x if x not in stop_words else None)
-print(df['extracted_emojis'][1])
+  extracted_emojis.append(str(extract_emojis(currentSentence)))
+# print(extracted_emojis)
 
 
-# Function to calculate sentiment score for whole data set
+df['content'] = extracted_emojis
+
+
+# Función para calcular los sentimientos del dataset
 
 def senti_sc(x):
   if x is not None:
     return TextBlob(x).sentiment
 
 
-df["Sentiment_score"] = df["extracted_emojis"].apply(senti_sc)
-print(df.loc[0:19, ['extracted_emojis', 'Sentiment_score']])
-# f.close()
+from scipy import stats
+
+listlikes = []
+listscore = []
+listmagnitude = []
+
+for x in dataUca:
+  listlikes.append(x["thumbsUpCount"])
+  listscore.append(x["score"])
+
+correlation, p_value = stats.pearsonr(listscore, listlikes)
+
+print(correlation)
+print(p_value)
+
+df["puntuaciónSentimientos"] = df["content"].apply(senti_sc)
+print(df.loc[0:54, ['content', 'puntuaciónSentimientos']])
+
+
 
 # df_busu = pd.DataFrame(np.array(reviewsUca),columns=['Reseñas'])
 #
@@ -137,8 +172,7 @@ print(df.loc[0:19, ['extracted_emojis', 'Sentiment_score']])
 # df_busu = df_busu.join(pd.DataFrame(df_busu.pop('Reseñas').tolist()))
 #
 #
-# df_busu.content.to_excel('scrapingReviews.xlsx', header=True, index=False)
-
+df.to_excel('scrapingReviewsFeelings.xlsx', header=True, index=False)
 
 # print(reviewsUca)
 
