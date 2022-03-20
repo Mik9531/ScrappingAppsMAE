@@ -42,8 +42,14 @@ dataUca = reviews_all(
 
 # TRADUCCIÓN DE TEXTOS
 
+originalReviewList = []
+
 for currentReview in dataUca:
   currentReview['content'] = (currentReview['content'].encode('latin-1', 'replace').decode('latin-1'))
+
+  # Copia original de la reseña
+  originalReviewList.append(currentReview['content'])
+
   traductor = GoogleTranslator(source='auto', target='en')
   currentReview['content'] = traductor.translate(currentReview['content'])
 
@@ -51,7 +57,7 @@ for currentReview in dataUca:
 
 df = pd.DataFrame(dataUca)
 
-df = df[["userName", "at", "thumbsUpCount", "content", "reviewCreatedVersion", "score"]]
+df = df[["userName", "at", "reviewCreatedVersion", "content", "thumbsUpCount", "score"]]
 
 # UTILIDADES
 
@@ -146,24 +152,49 @@ def senti_sc(x):
     return TextBlob(x).sentiment
 
 
-from scipy import stats
+df["feelingScore"] = df["content"].apply(senti_sc)
+df["content"] = originalReviewList
+# print(df.loc[0:54, ['content', 'feelingScore']])
 
-listlikes = []
-listscore = []
-listmagnitude = []
+# background_colors.py
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill
 
-for x in dataUca:
-  listlikes.append(x["thumbsUpCount"])
-  listscore.append(x["score"])
 
-correlation, p_value = stats.pearsonr(listscore, listlikes)
+def make_your_style(val):
+  badScore = 'background-color: red;'
+  neutralScore = 'background-color: yellow;'
+  goodScore = 'background-color: green;'
 
-print(correlation)
-print(p_value)
+  # must return one string per cell in this row
+  if 0 <= val['feelingScore'].polarity <= 0.33:
+    return [badScore]
+  elif 0.33 <= val['feelingScore'].polarity <= 0.66:
+    return [neutralScore]
+  else:
+    return [goodScore]
 
-df["puntuaciónSentimientos"] = df["content"].apply(senti_sc)
-print(df.loc[0:54, ['content', 'puntuaciónSentimientos']])
 
+df.style.apply(make_your_style, subset=['feelingScore'], axis=1).to_excel("scrapingReviewsFeelings.xlsx",
+                                                                          engine='openpyxl',
+                                                                          index=False)
+
+# Otros cálculos como la correlación de Pearson
+
+# from scipy import stats
+#
+# listlikes = []
+# listscore = []
+# listmagnitude = []
+#
+# for x in dataUca:
+#   listlikes.append(x["thumbsUpCount"])
+#   listscore.append(x["score"])
+#
+# correlation, p_value = stats.pearsonr(listscore, listlikes)
+#
+# print(correlation)
+# print(p_value)
 
 
 # df_busu = pd.DataFrame(np.array(reviewsUca),columns=['Reseñas'])
@@ -172,7 +203,6 @@ print(df.loc[0:54, ['content', 'puntuaciónSentimientos']])
 # df_busu = df_busu.join(pd.DataFrame(df_busu.pop('Reseñas').tolist()))
 #
 #
-df.to_excel('scrapingReviewsFeelings.xlsx', header=True, index=False)
 
 # print(reviewsUca)
 
