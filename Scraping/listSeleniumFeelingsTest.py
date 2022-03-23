@@ -1,5 +1,5 @@
 # Bloque para análisis de sentimientos
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pandas as pd
 from google_play_scraper import Sort, reviews_all
 import string
@@ -13,6 +13,8 @@ from textblob import TextBlob
 import json
 from deep_translator import GoogleTranslator
 from nltk.tokenize.treebank import TreebankWordDetokenizer
+
+print(EXAMPLE)
 
 dataUca = reviews_all(
   'net.universia.uca',
