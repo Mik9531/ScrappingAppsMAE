@@ -1,0 +1,1 @@
+{"profiledFunctions": [{"file": "C:\\Users\\migue\\Desktop\\TFG\\ScrappingAppsMAE\\Scraping\\testScrapingsLibraries.py", "lineNo": 28, "functionName": "obtainList", "profiledLines": [{"lineNo": 30, "hits": 1, "time": 113451387}, {"lineNo": 31, "hits": 1, "time": 13}]}], "unit": 1e-07}
