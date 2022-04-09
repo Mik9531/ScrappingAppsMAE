@@ -23,35 +23,6 @@ def print_json(json_object):
     print(highlight(json_str, JsonLexer(), TerminalFormatter()))
 
 
-# google-play-scraper-py
-
-@profile
-def obtainList():
-    resultList = scraper.list('TOP_FREE', None, None, 500, 'es', 'US', True)
-    return resultList
-
-
-testApp = scraper.app(appId='appinventor.ai_ruizrube.Fraseologia')
-print_json(testApp)
-
-resultList = obtainList()
-
-appIdList = []
-
-for app in resultList:
-    appIdList.append(app['appId'])
-
-# Búsqueda de un termino
-# testSearchApps = scraper.search('uca', 50, 'es', 'es', True)
-# print_json(testSearchApps[0])
-
-
-# Descarga de apks en local
-
-
-# Descarga de archivos APK desde Google Play
-# El scrip realiza el scraping desde  https://apkpure.com
-
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import requests
@@ -100,8 +71,14 @@ def download_apk(app_id):
 
 
 # Descarga de APK
-for app in appIdList:
-    download_apk(app)
+download_apk('appinventor.ai_ruizrube.Fraseologia')
+
+from pyaxmlparser import APK
+
+apk = APK('appinventor.ai_ruizrube.Fraseologia.apk')
+apk2 = APK('cityTestApkDescomprimida/cityTest.apk')
+
+test = []
 
 #
 # # Función que nos imprimirá un json mejor formateado
