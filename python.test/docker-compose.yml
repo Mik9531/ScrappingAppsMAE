@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  flask:
+    build:
+
+      context: .
+
+    env_file:
+      - .env
+    ports:
+      - ${PORT}:${PORT}  # I want to set port defined in the env file
+    volumes:
+      - .:/serverDeploy
+    restart: always

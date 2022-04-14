@@ -237,7 +237,7 @@ def my_link():
 
     connection.close()
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- %s segundos ---" % (time.time() - start_time))
     return 'Terminado'
 
 
