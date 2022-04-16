@@ -6,6 +6,8 @@ FROM python:3.10
 ADD . /python.test
 WORKDIR /python.test
 
+ENV PORT 8080
+
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     npm
@@ -20,5 +22,8 @@ RUN pip install pymysql
 RUN pip install beautifulsoup4
 RUN pip install requests
 RUN pip install pyaxmlparser
+RUN pip install Flask-RESTful
+RUN pip install Flask-WTF
 
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 server:app
+
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 application:app

@@ -4,11 +4,12 @@ services:
     build:
 
       context: .
+      dockerfile: Dockerfile
 
     env_file:
       - .env
     ports:
-      - ${PORT}:${PORT}  # I want to set port defined in the env file
+      - ${PORT}:8080  # I want to set port defined in the env file
     volumes:
       - .:/server
     restart: always
