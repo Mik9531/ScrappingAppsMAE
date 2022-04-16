@@ -1,0 +1,5 @@
+#app.yaml
+runtime: python39
+
+env_variables:
+  PORT: 8080

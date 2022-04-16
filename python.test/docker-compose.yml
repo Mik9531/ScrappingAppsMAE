@@ -10,5 +10,5 @@ services:
     ports:
       - ${PORT}:${PORT}  # I want to set port defined in the env file
     volumes:
-      - .:/serverDeploy
+      - .:/server
     restart: always

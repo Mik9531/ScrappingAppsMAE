@@ -16,5 +16,9 @@ RUN pip install google-play-scraper-py
 RUN pip install flask
 RUN pip install gunicorn
 RUN pip install python-dotenv
+RUN pip install pymysql
+RUN pip install beautifulsoup4
+RUN pip install requests
+RUN pip install pyaxmlparser
 
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 serverDeploy:app
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 server:app
