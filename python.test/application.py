@@ -76,22 +76,15 @@ def index():
 
 @app.route('/listadoApks/')
 def my_link():
-
     start_time = time.time()
 
-
-    # unix_socket = '/cloudsql/{}'.format('boreal-byte-264518:europe-west1:python-mysql')
-
-    # connection = pymysql.connect(host='35.233.86.50',
-    #                              user='root',
-    #                              password='kalandria',
-    #                              db='testPy',
-    #                              charset='utf8mb4',
-    #                              cursorclass=pymysql.cursors.DictCursor)
-    # cursor = connection.cursor()
-
-    # cursor.execute("SET NAMES 'utf8mb4'")
-    # cursor.execute("SET CHARACTER SET utf8mb4")
+    connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
+                                 user='root',
+                                 password='kalandria',
+                                 db='testPy',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+    cursor = connection.cursor()
 
     collectionsList = []
 
@@ -111,10 +104,10 @@ def my_link():
 
         resultList = obtainList(collection)
 
-        # if resultList is not None:
-        #     cursor.execute(
-        #         "CREATE TABLE IF NOT EXISTS " + collection + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),position INT, created DATE)")
-        #
+        if resultList is not None:
+            cursor.execute(
+                "CREATE TABLE IF NOT EXISTS " + collection + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),position INT, created DATE)")
+
         totalApps = []
         totalAppsCollection = []
         contPosition = 1
@@ -127,27 +120,27 @@ def my_link():
 
             val = app['appId']
 
-            # cursor.execute(sql, val)
-            #
-            # packageNameQuery = cursor.fetchone()
+            cursor.execute(sql, val)
 
-            # if packageNameQuery is not None or cursor.lastrowid is None:
-            #
-            #     # Descarga de APK
-            #     # idDownload = download_apk(app['appId'])
-            #     idDownload = None
-            #     if idDownload is not None:
-            #         if os.path.exists(idDownload):
-            #             apk = APK(idDownload)
-            #             packageName = apk.packagename
-            #             del apk
-            #             os.remove(idDownload)
-            #     else:
-            #         packageName = None
-            #
-            #
-            # else:
-            #     packageName = None
+            packageNameQuery = cursor.fetchone()
+
+            if packageNameQuery is not None or cursor.lastrowid is None:
+
+                # Descarga de APK
+                # idDownload = download_apk(app['appId'])
+                idDownload = None
+                if idDownload is not None:
+                    if os.path.exists(idDownload):
+                        apk = APK(idDownload)
+                        packageName = apk.packagename
+                        del apk
+                        os.remove(idDownload)
+                else:
+                    packageName = None
+
+
+            else:
+                packageName = None
 
             score = app.get('score')
             ratings = app.get('ratings')
@@ -176,8 +169,8 @@ def my_link():
                     app.get('recentChanges'),
                     app.get('released'),
                     app['editorsChoice'],
-                    app['url']
-                    )
+                    app['url'],
+                    packageName)
 
             collectionApps = (app['appId'],
                               contPosition)
@@ -229,9 +222,9 @@ def my_link():
               "url=VALUES(url)"
 
         val = totalApps
-        # cursor.executemany(sql, val)
-        # connection.commit()
-        # print(cursor.rowcount, "aplicaciones insertadas.")
+        cursor.executemany(sql, val)
+        connection.commit()
+        print(cursor.rowcount, "aplicaciones insertadas.")
 
         # Guardamos las aplicaciones en la tabla de Aplicaciones
 
@@ -239,13 +232,14 @@ def my_link():
                                             "position," \
                                             "created) VALUES (%s,%s,CURDATE())"
         val = totalAppsCollection
-        # cursor.executemany(sql, val)
-        # connection.commit()
-        # print(cursor.rowcount, "aplicaciones del listado insertadas.")
+        cursor.executemany(sql, val)
+        connection.commit()
+        print(cursor.rowcount, "aplicaciones del listado insertadas.")
 
-    # connection.close()
+    connection.close()
 
     return "--- %s segundos ---" % (time.time() - start_time)
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
