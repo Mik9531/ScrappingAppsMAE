@@ -69,22 +69,26 @@ def obtainList(collection):
     return resultList
 
 
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
+
+
 @app.route('/')
-def index():
-    return render_template('index.html')
-
-
-@app.route('/listadoApks/')
 def my_link():
     start_time = time.time()
 
-    connection = pymysql.connect(host='localhost',
+    connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
                                  db='testPy',
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
+
+    # Creamos la tabla de APLICACIONES si no existe
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS " + 'APLICACIONES' + "(`appId` varchar(255) NOT NULL PRIMARY KEY,`title` varchar(255) DEFAULT NULL,`created` datetime DEFAULT NULL, `updated` datetime DEFAULT NULL, `score` float(255,2) DEFAULT NULL, `summary` varchar(255) DEFAULT NULL, `description` varchar(255) DEFAULT NULL, `installs` varchar(255) DEFAULT NULL, `maxInstalls` int(255) DEFAULT NULL, `ratings` varchar(255) DEFAULT NULL, `reviews` varchar(255) DEFAULT NULL, `histogram` varchar(255) DEFAULT NULL, `price` float(255,0) DEFAULT NULL, `free` varchar(255) DEFAULT NULL, `androidVersionText` varchar(255) DEFAULT NULL, `developer` varchar(255) DEFAULT NULL, `genre` varchar(255) DEFAULT NULL, `genreId` varchar(255) DEFAULT NULL, `contentRating` varchar(255) DEFAULT NULL, `adSupported` varchar(255) DEFAULT NULL, `released` varchar(255) DEFAULT NULL, `recentChanges` varchar(255) DEFAULT NULL, `editorsChoice` varchar(255) DEFAULT NULL, `url` varchar(255) DEFAULT NULL, `packagename` varchar(255) DEFAULT NULL)")
 
     collectionsList = []
 
@@ -122,11 +126,11 @@ def my_link():
                 totalReviews = []
 
                 cursor.execute(
-                    "CREATE TABLE IF NOT EXISTS " + 'Reviews' + "(id VARCHAR(255) PRIMARY KEY, appId VARCHAR(255),userName VARCHAR(255), date VARCHAR(255), score INT, text TEXT)")
+                    "CREATE TABLE IF NOT EXISTS " + 'REVIEWS' + "(id VARCHAR(255) PRIMARY KEY, appId VARCHAR(255),userName VARCHAR(255), date VARCHAR(255), score INT, text TEXT)")
 
                 # Buscamos si existe en la tabla esa aplicacion, para actualizarla posteriormente con 100 nuevos registros
 
-                sql = "SELECT appId FROM Reviews WHERE appId = %s"
+                sql = "SELECT appId FROM REVIEWS WHERE appId = %s"
 
                 val = app['appId']
 
@@ -135,7 +139,7 @@ def my_link():
                 appId = cursor.fetchone()
 
                 if appId is not None:
-                    sql = "DELETE FROM Reviews WHERE appId = %s"
+                    sql = "DELETE FROM REVIEWS WHERE appId = %s"
                     val = appId['appId']
                     cursor.execute(sql, val)
                     connection.commit()
@@ -151,7 +155,7 @@ def my_link():
                                    )
                     totalReviews.append(dataReviews)
 
-                sql = "INSERT INTO Reviews(id," \
+                sql = "INSERT INTO REVIEWS(id," \
                       "appId," \
                       "userName," \
                       "date," \
@@ -161,11 +165,11 @@ def my_link():
                 val = totalReviews
                 cursor.executemany(sql, val)
                 connection.commit()
-                print(cursor.rowcount, "comentario insertado.")
+                print(cursor.rowcount, "comentarios insertados.")
 
             # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk)
 
-            sql = "SELECT packageName FROM Aplicaciones WHERE appId = %s"
+            sql = "SELECT packageName FROM APLICACIONES WHERE appId = %s"
 
             val = app['appId']
 
@@ -228,7 +232,7 @@ def my_link():
             totalAppsCollection.append(collectionApps)
             contPosition += 1
 
-        sql = "INSERT INTO Aplicaciones(appId," \
+        sql = "INSERT INTO APLICACIONES(appId," \
               "title," \
               "score," \
               "summary," \
@@ -275,7 +279,7 @@ def my_link():
         connection.commit()
         print(cursor.rowcount, "aplicaciones insertadas.")
 
-        # Guardamos las aplicaciones en la tabla de Aplicaciones
+        # Guardamos las aplicaciones en la tabla de APLICACIONES
 
         sql = "INSERT INTO " + collection + " (appId," \
                                             "position," \
