@@ -78,7 +78,7 @@ def index():
 def my_link():
     start_time = time.time()
 
-    connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
+    connection = pymysql.connect(host='localhost',
                                  user='root',
                                  password='kalandria',
                                  db='testPy',
@@ -113,6 +113,55 @@ def my_link():
         contPosition = 1
 
         for app in resultList:
+
+            # Obtenemos los 100 comentarios mas recientes de la aplicacion
+
+            reviews = scraper.reviews(app['appId'], lang='es', country='es', num=100)
+
+            if reviews['data'] is not None:
+                totalReviews = []
+
+                cursor.execute(
+                    "CREATE TABLE IF NOT EXISTS " + 'Reviews' + "(id VARCHAR(255) PRIMARY KEY, appId VARCHAR(255),userName VARCHAR(255), date VARCHAR(255), score INT, text TEXT)")
+
+                # Buscamos si existe en la tabla esa aplicacion, para actualizarla posteriormente con 100 nuevos registros
+
+                sql = "SELECT appId FROM Reviews WHERE appId = %s"
+
+                val = app['appId']
+
+                cursor.execute(sql, val)
+
+                appId = cursor.fetchone()
+
+                if appId is not None:
+                    sql = "DELETE FROM Reviews WHERE appId = %s"
+                    val = appId['appId']
+                    cursor.execute(sql, val)
+                    connection.commit()
+                    print(cursor.rowcount, "registros eliminados.")
+
+                for review in reviews['data']:
+                    dataReviews = (review['id'],
+                                   app['appId'],
+                                   review['userName'],
+                                   review['date'],
+                                   review['score'],
+                                   review['text'],
+                                   )
+                    totalReviews.append(dataReviews)
+
+                sql = "INSERT INTO Reviews(id," \
+                      "appId," \
+                      "userName," \
+                      "date," \
+                      "score," \
+                      "text) VALUES (%s,%s,%s,%s,%s,%s)"
+
+                val = totalReviews
+                cursor.executemany(sql, val)
+                connection.commit()
+                print(cursor.rowcount, "comentario insertado.")
 
             # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk)
 
