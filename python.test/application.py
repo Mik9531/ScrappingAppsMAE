@@ -1,9 +1,4 @@
 from flask import Flask, request, render_template, url_for, session, redirect
-from flask_restful import Resource, Api
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, RadioField, TextAreaField
-from wtforms.fields import EmailField
-from wtforms.validators import InputRequired
 import os
 import time
 
@@ -65,7 +60,7 @@ def download_apk(app_id):
 
 
 def obtainList(collection, country):
-    resultList = scraper.list(collection, None, None, 50, 'es', country, True)
+    resultList = scraper.list(collection, None, None, 1, 'es', country, True)
     return resultList
 
 
@@ -86,25 +81,22 @@ def my_link():
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
 
-    # Creamos la tabla de APLICACIONES si no existe
+    # Creamos la tabla de APPS si no existe
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS " + 'APLICACIONES' + "(`appId` varchar(255) NOT NULL PRIMARY KEY,`title` varchar(255) DEFAULT NULL,`created` datetime DEFAULT NULL, `updated` datetime DEFAULT NULL, `score` float(255,2) DEFAULT NULL, `summary` varchar(255) DEFAULT NULL, `description` varchar(255) DEFAULT NULL, `installs` varchar(255) DEFAULT NULL, `maxInstalls` int(255) DEFAULT NULL, `ratings` varchar(255) DEFAULT NULL, `reviews` varchar(255) DEFAULT NULL, `histogram` varchar(255) DEFAULT NULL, `price` float(255,0) DEFAULT NULL, `free` varchar(255) DEFAULT NULL, `androidVersionText` varchar(255) DEFAULT NULL, `developer` varchar(255) DEFAULT NULL, `genre` varchar(255) DEFAULT NULL, `genreId` varchar(255) DEFAULT NULL, `contentRating` varchar(255) DEFAULT NULL, `adSupported` varchar(255) DEFAULT NULL, `released` varchar(255) DEFAULT NULL, `recentChanges` varchar(255) DEFAULT NULL, `editorsChoice` varchar(255) DEFAULT NULL, `url` varchar(255) DEFAULT NULL, `packagename` varchar(255) DEFAULT NULL)")
+        "CREATE TABLE IF NOT EXISTS " + 'APPS' + "(`appId` varchar(255) NOT NULL PRIMARY KEY,`title` varchar(255) DEFAULT NULL,`created` datetime DEFAULT NULL, `updated` datetime DEFAULT NULL, `score` float(255,2) DEFAULT NULL, `summary` varchar(255) DEFAULT NULL, `description` varchar(255) DEFAULT NULL, `installs` varchar(255) DEFAULT NULL, `maxInstalls` int(255) DEFAULT NULL, `ratings` varchar(255) DEFAULT NULL, `reviews` varchar(255) DEFAULT NULL, `histogram` varchar(255) DEFAULT NULL, `price` float(255,0) DEFAULT NULL, `free` varchar(255) DEFAULT NULL, `androidVersionText` varchar(255) DEFAULT NULL, `developer` varchar(255) DEFAULT NULL, `genre` varchar(255) DEFAULT NULL, `genreId` varchar(255) DEFAULT NULL, `contentRating` varchar(255) DEFAULT NULL, `adSupported` varchar(255) DEFAULT NULL, `released` varchar(255) DEFAULT NULL, `recentChanges` varchar(255) DEFAULT NULL, `editorsChoice` varchar(255) DEFAULT NULL, `url` varchar(255) DEFAULT NULL, `packagename` varchar(255) DEFAULT NULL)")
 
     collectionsList = []
     countriesList = []
 
+    # Listado de colecciones de aplicaciones
     collectionsList.append('TOP_FREE')
     collectionsList.append('TOP_PAID')
     collectionsList.append('GROSSING')
     collectionsList.append('TOP_FREE_GAMES')
     collectionsList.append('TOP_PAID_GAMES')
     collectionsList.append('TOP_GROSSING_GAMES')
-    collectionsList.append('TRENDING')
-    collectionsList.append('NEW_FREE')
-    collectionsList.append('NEW_PAID')
-    collectionsList.append('NEW_FREE_GAMES')
-    collectionsList.append('NEW_PAID_GAMES')
 
+    # Listado de paises
     countriesList.append('es')
     countriesList.append('de')
     countriesList.append('cn')
@@ -244,7 +236,7 @@ def my_link():
 
                 # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk)
 
-                sql = "SELECT packageName FROM APLICACIONES WHERE appId = %s"
+                sql = "SELECT packageName FROM APPS WHERE appId = %s"
 
                 val = app['appId']
 
@@ -255,8 +247,8 @@ def my_link():
                 if packageNameQuery is not None or cursor.lastrowid is None:
 
                     # Descarga de APK
-                    # idDownload = download_apk(app['appId'])
-                    idDownload = None
+                    idDownload = download_apk(app['appId'])
+                    # idDownload = None
                     if idDownload is not None:
                         if os.path.exists(idDownload):
                             apk = APK(idDownload)
@@ -271,6 +263,7 @@ def my_link():
                     packageName = None
 
                 # Guardamos la aplicacion
+                print(packageName)
                 score = app.get('score')
                 ratings = app.get('ratings')
                 reviews = app.get('reviews')
@@ -307,7 +300,7 @@ def my_link():
                 totalAppsCollection.append(collectionApps)
                 contPosition += 1
 
-            sql = "INSERT INTO APLICACIONES(appId," \
+            sql = "INSERT INTO APPS(appId," \
                   "title," \
                   "score," \
                   "summary," \
@@ -364,8 +357,7 @@ def my_link():
 
     connection.close()
 
-    print('test123')
-    return "--- %s segundos ---" % (time.time() - start_time)
+    return "Carga de datos realizada correctamente en %s segundos " % (time.time() - start_time)
 
 
 if __name__ == '__main__':

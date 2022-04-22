@@ -1,0 +1,9 @@
+version: '3'
+services:
+  hbase:
+    container_name: pythontest-flask-1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mik9531/flask_app:latest
+

@@ -1,11 +1,11 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "mik9531/flask_app",
+    "Name": "mik9531/flask_app"
   },
   "Ports": [
     {
-      "ContainerPort": 5000
+      "ContainerPort": 8080
     }
   ]
 }

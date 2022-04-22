@@ -2,4 +2,4 @@
 runtime: python38
 
 env_variables:
-  PORT: 8080
+  PORT: 5000
