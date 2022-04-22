@@ -6,7 +6,6 @@ FROM python:3.10
 ADD . /python.test
 WORKDIR /python.test
 
-ENV PORT 8080
 
 RUN apt-get update && apt-get install -y \
     software-properties-common \
@@ -25,5 +24,8 @@ RUN pip install pyaxmlparser
 RUN pip install Flask-RESTful
 RUN pip install Flask-WTF
 
+EXPOSE 5000
 
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 application:app
+ENTRYPOINT [ "python" ]
+
+CMD [ "application.py" ]

@@ -1,5 +1,5 @@
 version: 1
 cron:
- ? name: "schedule"
-   url: "/"
-   schedule: "* * * * *"
+ - name: "db"
+   url: "/listadoApks/"
+   schedule: "10 * * * *"
