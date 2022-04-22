@@ -1,9 +1,11 @@
 version: '3'
 services:
-  hbase:
-    container_name: pythontest-flask-1
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: mik9531/flask_app:latest
+  web:
+    build: .
+
+    ports:
+      - "5000:5000"  # I want to set port defined in the env file
+    volumes:
+      - .:/server
+    restart: always
 

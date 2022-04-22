@@ -1,10 +1,11 @@
 # Dockerfile, Image, Container
 
-FROM python:3.10
+FROM python:3
 
 # Copy local code to the container image.
-ADD . /python.test
 WORKDIR /python.test
+
+ENV PORT 8080
 
 
 RUN apt-get update && apt-get install -y \
@@ -24,8 +25,8 @@ RUN pip install pyaxmlparser
 RUN pip install Flask-RESTful
 RUN pip install Flask-WTF
 
-EXPOSE 5000
 
-ENTRYPOINT [ "python" ]
+COPY . /python.test
 
-CMD [ "application.py" ]
+
+CMD [ "python", "application.py" ]

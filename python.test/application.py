@@ -60,7 +60,7 @@ def download_apk(app_id):
 
 
 def obtainList(collection, country):
-    resultList = scraper.list(collection, None, None, 1, 'es', country, True)
+    resultList = scraper.list(collection, None, None, 50, 'es', country, True)
     return resultList
 
 
@@ -247,8 +247,8 @@ def my_link():
                 if packageNameQuery is not None or cursor.lastrowid is None:
 
                     # Descarga de APK
-                    idDownload = download_apk(app['appId'])
-                    # idDownload = None
+                    # idDownload = download_apk(app['appId'])
+                    idDownload = None
                     if idDownload is not None:
                         if os.path.exists(idDownload):
                             apk = APK(idDownload)
