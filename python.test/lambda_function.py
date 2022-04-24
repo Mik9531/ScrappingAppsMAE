@@ -1,3 +1,7 @@
-import webbrowser
+from urllib.request import Request, urlopen  # Python 3
 
-webbrowser.open('http://google.es')
+
+req = Request('http://dockerflaskpython-env.eba-4mvjtpq7.us-east-2.elasticbeanstalk.com/')
+content = urlopen(req).read()
+
+print (content)

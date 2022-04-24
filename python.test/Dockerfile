@@ -13,8 +13,6 @@ WORKDIR /home/flask_app/helloworld
 
 COPY templates /home/flask_app/helloworld/templates
 
-ADD .ebextensions /home/flask_app/helloworld/.ebextensions
-
 
 COPY application.py wsgi.py boot.sh ./
 RUN chmod +x boot.sh

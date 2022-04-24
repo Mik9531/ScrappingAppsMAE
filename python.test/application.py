@@ -76,7 +76,7 @@ def my_link():
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
-                                 db='test',
+                                 db='testPy',
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
