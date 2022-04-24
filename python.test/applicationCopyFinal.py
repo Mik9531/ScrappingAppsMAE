@@ -56,7 +56,7 @@ def download_apk(app_id):
 
 
 def obtain_list(collection, category, country):
-    result_list = scraper.list(collection=collection, category=category, num=1, lang='es', country=country,
+    result_list = scraper.list(collection=collection, category=category, num=50, lang='es', country=country,
                                fullDetail=True)
     return result_list
 
@@ -76,7 +76,7 @@ def my_link():
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
-                                 db='test',
+                                 db='testPy',
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
@@ -89,12 +89,12 @@ def my_link():
 
     collections_list.append('TOP_FREE')
     collections_list.append('TOP_FREE_GAMES')
-    #
+
     collections_list.append('TOP_PAID')
     collections_list.append('TOP_PAID_GAMES')
-    #
-    # collections_list.append('GROSSING')
-    # collections_list.append('TOP_GROSSING_GAMES')
+
+    collections_list.append('GROSSING')
+    collections_list.append('TOP_GROSSING_GAMES')
 
     # Listado de paises
     countries_list.append('us')
@@ -450,11 +450,10 @@ def my_link():
                 connection.commit()
                 print(cursor.rowcount, "aplicaciones del listado insertadas.")
 
-
     connection.close()
 
     return "Carga de datos realizada correctamente en %s segundos " % (time.time() - start_time)
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')

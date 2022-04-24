@@ -1,5 +1,0 @@
-#version: 1
-#cron:
-# - name: "db"
-#   url: "/listadoApks/"
-#   schedule: "10 * * * *"
