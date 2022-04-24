@@ -1,18 +1,14 @@
-from flask import Flask, request, render_template, url_for, session, redirect
+from flask import Flask, render_template
 import os
 import time
-
-application = app = Flask(__name__)
-
 import scraper
-
 import pymysql
-
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import requests
-
 from pyaxmlparser import APK
+
+application = app = Flask(__name__)
 
 
 def search(query):
@@ -22,7 +18,7 @@ def search(query):
     }).text
     soup = BeautifulSoup(res, "html.parser")
     search_result = soup.find('div', {'id': 'search-res'}).find('dl', {'class': 'search-dl'})
-    if search_result != None:
+    if search_result is not None:
         app_tag = search_result.find('p', {'class': 'search-title'}).find('a')
         download_link = 'https://apkpure.com' + app_tag['href']
         return download_link
@@ -34,7 +30,7 @@ def download(link):
                       'Version/9.1.2 Safari/601.7.5 '
     }).text
     soup = BeautifulSoup(res, "html.parser").find('a', {'id': 'download_link'})
-    if soup != None:
+    if soup is not None:
         if soup['href']:
             r = requests.get(soup['href'], stream=True, headers={
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) '
@@ -52,16 +48,17 @@ def download_apk(app_id):
 
     if download_link is not None:
         print('Downloading {}.apk ...'.format(download_link))
-        idDownload = download(download_link)
+        id_download = download(download_link)
         print('Download completed!')
-        return idDownload
+        return id_download
     else:
         print('No results')
 
 
-def obtainList(collection, country):
-    resultList = scraper.list(collection, None, None, 50, 'es', country, True)
-    return resultList
+def obtain_list(collection, category, country):
+    result_list = scraper.list(collection=collection, category=category, num=50, lang='es', country=country,
+                               fullDetail=True)
+    return result_list
 
 
 @app.route('/')
@@ -71,7 +68,10 @@ def index():
 
 @app.route('/listadoApks/')
 def my_link():
+    global category
     start_time = time.time()
+
+    # Creamos la conexion a la base de datos
 
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
@@ -81,279 +81,374 @@ def my_link():
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
 
-    # Creamos la tabla de APPS si no existe
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS " + 'APPS' + "(`appId` varchar(255) NOT NULL PRIMARY KEY,`title` varchar(255) DEFAULT NULL,`created` datetime DEFAULT NULL, `updated` datetime DEFAULT NULL, `score` float(255,2) DEFAULT NULL, `summary` varchar(255) DEFAULT NULL, `description` varchar(255) DEFAULT NULL, `installs` varchar(255) DEFAULT NULL, `maxInstalls` int(255) DEFAULT NULL, `ratings` varchar(255) DEFAULT NULL, `reviews` varchar(255) DEFAULT NULL, `histogram` varchar(255) DEFAULT NULL, `price` float(255,0) DEFAULT NULL, `free` varchar(255) DEFAULT NULL, `androidVersionText` varchar(255) DEFAULT NULL, `developer` varchar(255) DEFAULT NULL, `genre` varchar(255) DEFAULT NULL, `genreId` varchar(255) DEFAULT NULL, `contentRating` varchar(255) DEFAULT NULL, `adSupported` varchar(255) DEFAULT NULL, `released` varchar(255) DEFAULT NULL, `recentChanges` varchar(255) DEFAULT NULL, `editorsChoice` varchar(255) DEFAULT NULL, `url` varchar(255) DEFAULT NULL, `packagename` varchar(255) DEFAULT NULL)")
-
-    collectionsList = []
-    countriesList = []
+    collections_list = []
+    countries_list = []
 
     # Listado de colecciones de aplicaciones
-    collectionsList.append('TOP_FREE')
-    collectionsList.append('TOP_PAID')
-    collectionsList.append('GROSSING')
-    collectionsList.append('TOP_FREE_GAMES')
-    collectionsList.append('TOP_PAID_GAMES')
-    collectionsList.append('TOP_GROSSING_GAMES')
+    collections_list.append('APPLICATION')
+
+    collections_list.append('TOP_FREE')
+    collections_list.append('TOP_FREE_GAMES')
+
+    collections_list.append('TOP_PAID')
+    collections_list.append('TOP_PAID_GAMES')
+
+    collections_list.append('GROSSING')
+    collections_list.append('TOP_GROSSING_GAMES')
 
     # Listado de paises
-    countriesList.append('es')
-    countriesList.append('de')
-    countriesList.append('cn')
-    countriesList.append('us')
-    countriesList.append('uk')
+    countries_list.append('us')
+    countries_list.append('uk')
+    countries_list.append('es')
+    countries_list.append('de')
+    countries_list.append('cn')
 
-    for country in countriesList:
+    # Creamos la tabla de aplicaciones si no existe
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS " + 'APPS' + "(`appId` varchar(255) NOT NULL PRIMARY KEY,`title` varchar(255) "
+                                                 "DEFAULT NULL,`created` datetime DEFAULT NULL, `updated` datetime "
+                                                 "DEFAULT NULL, `score` float(255,2) DEFAULT NULL, `summary` varchar("
+                                                 "255) DEFAULT NULL, `description` varchar(255) DEFAULT NULL, "
+                                                 "`installs` varchar(255) DEFAULT NULL, `maxInstalls` int(255) "
+                                                 "DEFAULT NULL, `ratings` varchar(255) DEFAULT NULL, "
+                                                 "`reviews` varchar(255) DEFAULT NULL, `histogram` varchar(255) "
+                                                 "DEFAULT NULL, `price` float(255,0) DEFAULT NULL, `free` varchar("
+                                                 "255) DEFAULT NULL, `androidVersionText` varchar(255) DEFAULT NULL, "
+                                                 "`developer` varchar(255) DEFAULT NULL, `genre` varchar(255) DEFAULT "
+                                                 "NULL, `genreId` varchar(255) DEFAULT NULL, `contentRating` varchar("
+                                                 "255) DEFAULT NULL, `adSupported` varchar(255) DEFAULT NULL, "
+                                                 "`released` varchar(255) DEFAULT NULL, `recentChanges` varchar(255) "
+                                                 "DEFAULT NULL, `editorsChoice` varchar(255) DEFAULT NULL, "
+                                                 "`url` varchar(255) DEFAULT NULL,`icon` varchar(255) DEFAULT NULL)")
 
-        for collection in collectionsList:
+    # Creamos la tabla de permisos si no existe
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS " + 'PERMISSIONS' + "(appId VARCHAR(255) PRIMARY KEY, Location VARCHAR(255),"
+                                                        "Calendar VARCHAR(255),Microphone VARCHAR(255),"
+                                                        "Contacts VARCHAR(255),DeviceHistory VARCHAR(255),"
+                                                        "Camera VARCHAR(255),Storage VARCHAR(255),WiFi VARCHAR(255),"
+                                                        "PhotosMediaFiles VARCHAR(255), Phone VARCHAR(255), "
+                                                        "DeviceID VARCHAR(255), SMS VARCHAR(255), Identity VARCHAR("
+                                                        "255))")
 
-            resultList = obtainList(collection, country)
+    # Creamos la tabla de comentarios si no existe
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS " + 'REVIEWS' + "(id VARCHAR(255) PRIMARY KEY, appId VARCHAR(255),userName "
+                                                    "VARCHAR(255), date VARCHAR(255), score INT, text TEXT)")
 
-            if resultList is not None:
-                cursor.execute(
-                    "CREATE TABLE IF NOT EXISTS " + collection + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),position INT, country VARCHAR(255), created DATE)")
+    # Creamos la tabla de relacionados si no existe
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS " + 'RELATEDS' + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255), relatedApp VARCHAR(255))")
 
-            totalApps = []
-            totalAppsCollection = []
-            contPosition = 1
+    # Creamos la tabla de imagenes relacionadas si no existe
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS " + 'SCREENSHOTS' + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),urlScreenshot VARCHAR(255))")
 
-            for app in resultList:
+    for collection in collections_list:
 
-                # Obtenemos los permisos de las aplicaciones
+        if collection == 'GROSSING':
+            table_colection = 'TOP_GROSSING'
+        elif collection == 'APPLICATION':
+            table_colection = 'TOP_APPLICATIONS'
+            category = collection
+            countries_list_actual = []
+            countries_list_actual.append('us')
+            collection = None
+        else:
+            table_colection = collection
+            category = None
+            countries_list_actual = countries_list
 
-                permissions = scraper.permissions(app['appId'], lang='en', short=True)
+        # Creamos la tabla de la coleccion actual
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS " + table_colection + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
+                                                              "position INT, country VARCHAR(255), created DATE)")
 
-                if permissions is not None:
-                    totalPermissions = []
+        for country in countries_list_actual:
 
-                    cursor.execute(
-                        "CREATE TABLE IF NOT EXISTS " + 'PERMISSIONS' + "(appId VARCHAR(255) PRIMARY KEY, Location VARCHAR(255),Calendar VARCHAR(255),Microphone VARCHAR(255),Contacts VARCHAR(255),DeviceHistory VARCHAR(255),Camera VARCHAR(255),Storage VARCHAR(255),WiFi VARCHAR(255),PhotosMediaFiles VARCHAR(255), Phone VARCHAR(255), DeviceID VARCHAR(255), SMS VARCHAR(255), Identity VARCHAR(255))")
+            result_list = obtain_list(collection, category, country)
 
-                    # Buscamos si existe en la tabla esa aplicacion, para actualizarla posteriormente si hubiera algun cambio en sus permisos
+            total_apps = []
+            total_apps_collection = []
+            cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
 
-                    sql = "SELECT appId FROM PERMISSIONS WHERE appId = %s"
+            if result_list is not None:
+                for actual_app in result_list:
+                    total_relateds = []
+                    total_screenshots = []
 
-                    val = app['appId']
+                    # Guardamos las urls de las capturas de la aplicacion actual
+                    if actual_app['screenshots'] is not None:
+                        for actual_screenshot in actual_app['screenshots']:
+                            data_screenshots = (actual_app['appId'],
+                                                actual_screenshot
+                                                )
+                            total_screenshots.append(data_screenshots)
 
-                    cursor.execute(sql, val)
+                        sql = "INSERT INTO SCREENSHOTS (appId," \
+                              "urlScreenshot) VALUES (%s,%s)"
 
-                    appId = cursor.fetchone()
-
-                    if appId is not None:
-                        sql = "DELETE FROM PERMISSIONS WHERE appId = %s"
-                        val = appId['appId']
-                        cursor.execute(sql, val)
+                        val = total_screenshots
+                        cursor.executemany(sql, val)
                         connection.commit()
-                        print(cursor.rowcount, "registro eliminado.")
+                        print(cursor.rowcount, "capturas insertadas.")
 
-                    SMSPermission = 'SMS' in permissions
-                    storagePermission = 'Storage' in permissions
-                    cameraPermission = 'Camera' in permissions
-                    devicePermission = 'Device & app history' in permissions
-                    microphonePermission = 'Microphone' in permissions
-                    calendarPermission = 'Calendar' in permissions
-                    phonePermission = 'Phone' in permissions
-                    deviceIDPermission = 'Device ID & call information' in permissions
-                    identityPermission = 'Identity' in permissions
-                    mediaPermission = 'Photos/Media/Files' in permissions
-                    contactsPermission = 'Contacts' in permissions
-                    wifiPermission = 'Wi-Fi connection information' in permissions
-                    locationPermission = 'Location' in permissions
+                    # Obtenemos las 5 primeras aplicaciones similares a la aplicacion actual
+                    try:
+                        similars = scraper.similar(actual_app['appId'], lang='es', fullDetail=False)
+                    except Exception:
+                        similars = None
+                    if similars is not None:
+                        five_similars = similars[0:5]
 
-                    dataPermissions = (app['appId'],
-                                       SMSPermission,
-                                       storagePermission,
-                                       cameraPermission,
-                                       devicePermission,
-                                       microphonePermission,
-                                       calendarPermission,
-                                       phonePermission,
-                                       deviceIDPermission,
-                                       identityPermission,
-                                       mediaPermission,
-                                       contactsPermission,
-                                       wifiPermission,
-                                       locationPermission
-                                       )
-                    totalPermissions.append(dataPermissions)
+                        for actual_similar in five_similars:
+                            data_relateds = (actual_app['appId'],
+                                             actual_similar['appId']
+                                             )
+                            total_relateds.append(data_relateds)
 
-                    sql = "INSERT INTO PERMISSIONS(appId," \
-                          "Location, Calendar, Microphone, Contacts, DeviceHistory, Camera, Storage, WiFi, PhotosMediaFiles, Phone, DeviceID, SMS, Identity ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                        sql = "INSERT INTO RELATEDS(appId," \
+                              "relatedApp) VALUES (%s,%s)"
 
-                    val = totalPermissions
-                    cursor.executemany(sql, val)
-                    connection.commit()
-                    print(cursor.rowcount, "permisos insertados.")
-
-                # Obtenemos los 30 comentarios mas recientes de la aplicacion
-
-                reviews = scraper.reviews(app['appId'], lang='es', country='es', num=30)
-
-                if reviews['data'] is not None:
-                    totalReviews = []
-
-                    cursor.execute(
-                        "CREATE TABLE IF NOT EXISTS " + 'REVIEWS' + "(id VARCHAR(255) PRIMARY KEY, appId VARCHAR(255),userName VARCHAR(255), date VARCHAR(255), score INT, text TEXT)")
-
-                    # Buscamos si existe en la tabla esa aplicacion, para actualizarla posteriormente con 100 nuevos registros
-
-                    sql = "SELECT appId FROM REVIEWS WHERE appId = %s"
-
-                    val = app['appId']
-
-                    cursor.execute(sql, val)
-
-                    appId = cursor.fetchone()
-
-                    if appId is not None:
-                        sql = "DELETE FROM REVIEWS WHERE appId = %s"
-                        val = appId['appId']
-                        cursor.execute(sql, val)
+                        val = total_relateds
+                        cursor.executemany(sql, val)
                         connection.commit()
-                        print(cursor.rowcount, "registros eliminados.")
+                        print(cursor.rowcount, "relacionados insertados.")
 
-                    for review in reviews['data']:
-                        dataReviews = (review['id'],
-                                       app['appId'],
-                                       review['userName'],
-                                       review['date'],
-                                       review['score'],
-                                       review['text'],
-                                       )
-                        totalReviews.append(dataReviews)
+                    # Obtenemos los permisos de la aplicacion actual
 
-                    sql = "INSERT INTO REVIEWS(id," \
-                          "appId," \
-                          "userName," \
-                          "date," \
-                          "score," \
-                          "text) VALUES (%s,%s,%s,%s,%s,%s)"
+                    permissions = scraper.permissions(actual_app['appId'], lang='en', short=True)
 
-                    val = totalReviews
-                    cursor.executemany(sql, val)
-                    connection.commit()
-                    print(cursor.rowcount, "comentarios insertados.")
+                    if permissions is not None:
+                        total_permissions = []
 
-                # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk)
+                        # Buscamos si existe en la tabla esa aplicacion, para actualizarla posteriormente si hubiera
+                        # algun cambio en sus permisos
 
-                sql = "SELECT packageName FROM APPS WHERE appId = %s"
+                        sql = "SELECT appId FROM PERMISSIONS WHERE appId = %s"
 
-                val = app['appId']
+                        val = actual_app['appId']
 
-                cursor.execute(sql, val)
+                        cursor.execute(sql, val)
 
-                packageNameQuery = cursor.fetchone()
+                        app_id = cursor.fetchone()
 
-                if packageNameQuery is not None or cursor.lastrowid is None:
+                        if app_id is not None:
+                            sql = "DELETE FROM PERMISSIONS WHERE appId = %s"
+                            val = app_id['appId']
+                            cursor.execute(sql, val)
+                            connection.commit()
+                            print(cursor.rowcount, "registro eliminado.")
 
-                    # Descarga de APK
-                    # idDownload = download_apk(app['appId'])
-                    idDownload = None
-                    if idDownload is not None:
-                        if os.path.exists(idDownload):
-                            apk = APK(idDownload)
-                            packageName = apk.packagename
-                            del apk
-                            os.remove(idDownload)
-                    else:
-                        packageName = None
+                        sms_permission = 'SMS' in permissions
+                        storage_permission = 'Storage' in permissions
+                        camera_permission = 'Camera' in permissions
+                        device_permission = 'Device & app history' in permissions
+                        microphone_permission = 'Microphone' in permissions
+                        calendar_permission = 'Calendar' in permissions
+                        phone_permission = 'Phone' in permissions
+                        device_id_permission = 'Device ID & call information' in permissions
+                        identity_permission = 'Identity' in permissions
+                        media_permission = 'Photos/Media/Files' in permissions
+                        contacts_permission = 'Contacts' in permissions
+                        wifi_permission = 'Wi-Fi connection information' in permissions
+                        location_permission = 'Location' in permissions
 
+                        data_permissions = (actual_app['appId'],
+                                            sms_permission,
+                                            storage_permission,
+                                            camera_permission,
+                                            device_permission,
+                                            microphone_permission,
+                                            calendar_permission,
+                                            phone_permission,
+                                            device_id_permission,
+                                            identity_permission,
+                                            media_permission,
+                                            contacts_permission,
+                                            wifi_permission,
+                                            location_permission
+                                            )
+                        total_permissions.append(data_permissions)
 
-                else:
-                    packageName = None
+                        sql = "INSERT INTO PERMISSIONS(appId," \
+                              "Location, Calendar, Microphone, Contacts, DeviceHistory, Camera, Storage, WiFi, " \
+                              "PhotosMediaFiles, Phone, DeviceID, SMS, Identity ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s," \
+                              "%s,%s,%s,%s) "
 
-                # Guardamos la aplicacion
-                print(packageName)
-                score = app.get('score')
-                ratings = app.get('ratings')
-                reviews = app.get('reviews')
+                        val = total_permissions
+                        cursor.executemany(sql, val)
+                        connection.commit()
+                        print(cursor.rowcount, "permisos insertados.")
 
-                if score is not None:
-                    score = round(score, 2)
+                    # Obtenemos los 30 comentarios mas recientes de la aplicacion
 
-                apps = (app['appId'],
-                        app['title'],
-                        score,
-                        app['summary'],
-                        app['description'].encode(),
-                        app['installs'],
-                        app['maxInstalls'],
-                        ratings,
-                        reviews,
-                        app['price'],
-                        app['free'],
-                        app['androidVersionText'],
-                        app['developer'],
-                        app['genre'],
-                        app['genreId'],
-                        app['contentRating'],
-                        app['adSupported'],
-                        app.get('recentChanges'),
-                        app.get('released'),
-                        app['editorsChoice'],
-                        app['url'],
-                        packageName)
+                    reviews = scraper.reviews(actual_app['appId'], lang='es', country='es', num=30)
 
-                collectionApps = (app['appId'], contPosition, country)
+                    if reviews['data'] is not None:
+                        total_reviews = []
 
-                totalApps.append(apps)
-                totalAppsCollection.append(collectionApps)
-                contPosition += 1
+                        # Buscamos si existe en la tabla esa aplicacion, para actualizarla posteriormente con 100 nuevos
+                        # registros
 
-            sql = "INSERT INTO APPS(appId," \
-                  "title," \
-                  "score," \
-                  "summary," \
-                  "description," \
-                  "installs," \
-                  "maxInstalls," \
-                  "ratings," \
-                  "reviews," \
-                  "price," \
-                  "free," \
-                  "androidVersionText," \
-                  "developer," \
-                  "genre," \
-                  "genreId," \
-                  "contentRating," \
-                  "adSupported," \
-                  "recentChanges," \
-                  "released," \
-                  "editorsChoice," \
-                  "url," \
-                  "packagename," \
-                  "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON DUPLICATE KEY UPDATE updated = NOW()," \
-                  "title=VALUES(title), " \
-                  "score=VALUES(score), " \
-                  "summary=VALUES(summary), " \
-                  "description=VALUES(description), " \
-                  "installs=VALUES(installs), " \
-                  "maxInstalls=VALUES(maxInstalls), " \
-                  "ratings=VALUES(ratings), " \
-                  "reviews=VALUES(reviews), " \
-                  "price=VALUES(price), " \
-                  "free=VALUES(free), " \
-                  "androidVersionText=VALUES(androidVersionText), " \
-                  "genre=VALUES(genre), " \
-                  "genreId=VALUES(genreId), " \
-                  "contentRating=VALUES(contentRating), " \
-                  "released=VALUES(released), " \
-                  "recentChanges=VALUES(recentChanges), " \
-                  "editorsChoice=VALUES(editorsChoice), " \
-                  "url=VALUES(url)"
+                        sql = "SELECT appId FROM REVIEWS WHERE appId = %s"
 
-            val = totalApps
-            cursor.executemany(sql, val)
-            connection.commit()
-            print(cursor.rowcount, "aplicaciones insertadas.")
+                        val = actual_app['appId']
 
-            # Guardamos las aplicaciones en la tabla correcta de la coleccion
+                        cursor.execute(sql, val)
 
-            sql = "INSERT INTO " + collection + "(appId, position,country,created) VALUES (%s,%s,%s,CURDATE())"
-            val = totalAppsCollection
-            cursor.executemany(sql, val)
-            connection.commit()
-            print(cursor.rowcount, "aplicaciones del listado insertadas.")
+                        app_id = cursor.fetchone()
+
+                        if app_id is not None:
+                            sql = "DELETE FROM REVIEWS WHERE appId = %s"
+                            val = app_id['appId']
+                            cursor.execute(sql, val)
+                            connection.commit()
+                            print(cursor.rowcount, "registros eliminados.")
+
+                        for review in reviews['data']:
+                            data_reviews = (review['id'],
+                                            actual_app['appId'],
+                                            review['userName'],
+                                            review['date'],
+                                            review['score'],
+                                            review['text'],
+                                            )
+                            total_reviews.append(data_reviews)
+
+                        sql = "INSERT INTO REVIEWS(id," \
+                              "appId," \
+                              "userName," \
+                              "date," \
+                              "score," \
+                              "text) VALUES (%s,%s,%s,%s,%s,%s)"
+
+                        val = total_reviews
+                        cursor.executemany(sql, val)
+                        connection.commit()
+                        print(cursor.rowcount, "comentarios insertados.")
+
+                    # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk) (actualmente desactivado por demora)
+
+                    # sql = "SELECT packageName FROM APPS WHERE appId = %s"
+                    #
+                    # val = actual_app['appId']
+                    #
+                    # cursor.execute(sql, val)
+                    #
+                    # package_name_query = cursor.fetchone()
+                    #
+                    # if package_name_query is not None or cursor.lastrowid is None:
+                    #
+                    #     # Descarga de APK
+                    #     id_download = download_apk(actual_app['appId'])
+                    #     # id_download = None
+                    #     if id_download is not None:
+                    #         if os.path.exists(id_download):
+                    #             apk = APK(id_download)
+                    #             package_name = apk.packagename
+                    #             del apk
+                    #             os.remove(id_download)
+                    #     else:
+                    #         package_name = None
+                    #
+                    #
+                    # else:
+                    #     package_name = None
+
+                    # Guardamos la aplicacion
+                    score = actual_app.get('score')
+                    ratings = actual_app.get('ratings')
+                    reviews = actual_app.get('reviews')
+
+                    if score is not None:
+                        score = round(score, 2)
+
+                    apps = (actual_app['appId'],
+                            actual_app['title'],
+                            score,
+                            actual_app['summary'],
+                            actual_app['description'].encode(),
+                            actual_app['installs'],
+                            actual_app['maxInstalls'],
+                            ratings,
+                            reviews,
+                            actual_app['price'],
+                            actual_app['free'],
+                            actual_app['androidVersionText'],
+                            actual_app['developer'],
+                            actual_app['genre'],
+                            actual_app['genreId'],
+                            actual_app['contentRating'],
+                            actual_app['adSupported'],
+                            actual_app.get('recentChanges'),
+                            actual_app.get('released'),
+                            actual_app['editorsChoice'],
+                            actual_app['url'],
+                            actual_app['icon']
+                            )
+
+                    collection_apps = (actual_app['appId'], cont_position, country)
+
+                    total_apps.append(apps)
+                    total_apps_collection.append(collection_apps)
+                    cont_position += 1
+
+                sql = "INSERT INTO APPS (appId," \
+                      "title," \
+                      "score," \
+                      "summary," \
+                      "description," \
+                      "installs," \
+                      "maxInstalls," \
+                      "ratings," \
+                      "reviews," \
+                      "price," \
+                      "free," \
+                      "androidVersionText," \
+                      "developer," \
+                      "genre," \
+                      "genreId," \
+                      "contentRating," \
+                      "adSupported," \
+                      "recentChanges," \
+                      "released," \
+                      "editorsChoice," \
+                      "url," \
+                      "icon," \
+                      "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON " \
+                      "DUPLICATE KEY UPDATE updated = NOW()," \
+                      "title=VALUES(title), " \
+                      "score=VALUES(score), " \
+                      "summary=VALUES(summary), " \
+                      "description=VALUES(description), " \
+                      "installs=VALUES(installs), " \
+                      "maxInstalls=VALUES(maxInstalls), " \
+                      "ratings=VALUES(ratings), " \
+                      "reviews=VALUES(reviews), " \
+                      "price=VALUES(price), " \
+                      "free=VALUES(free), " \
+                      "androidVersionText=VALUES(androidVersionText), " \
+                      "genre=VALUES(genre), " \
+                      "genreId=VALUES(genreId), " \
+                      "contentRating=VALUES(contentRating), " \
+                      "released=VALUES(released), " \
+                      "recentChanges=VALUES(recentChanges), " \
+                      "editorsChoice=VALUES(editorsChoice), " \
+                      "url=VALUES(url), icon=VALUES(icon)"
+
+                val = total_apps
+                cursor.executemany(sql, val)
+                connection.commit()
+                print(cursor.rowcount, "aplicaciones insertadas.")
+
+                # Guardamos las aplicaciones en la tabla correcta de la coleccion
+
+                sql = "INSERT INTO " + table_colection + "(appId, position,country,created) VALUES (%s,%s,%s,CURDATE())"
+                val = total_apps_collection
+                cursor.executemany(sql, val)
+                connection.commit()
+                print(cursor.rowcount, "aplicaciones del listado insertadas.")
 
     connection.close()
 
