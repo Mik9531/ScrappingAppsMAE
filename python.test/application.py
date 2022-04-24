@@ -65,6 +65,9 @@ def obtain_list(collection, category, country):
 def index():
     return render_template('index.html')
 
+@app.route('/testGraphs/')
+def createGraphs():
+    return render_template('index.html')
 
 @app.route('/listadoApks/')
 def my_link():
