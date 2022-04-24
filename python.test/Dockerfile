@@ -12,8 +12,8 @@ WORKDIR /home/flask_app/helloworld
 #RUN pip install -r requirements.txt
 
 COPY templates /home/flask_app/helloworld/templates
-COPY .ebextensions /home/flask_app/helloworld/.ebextensions
 
+ADD .ebextensions /home/flask_app/helloworld/.ebextensions
 
 
 COPY application.py wsgi.py boot.sh ./

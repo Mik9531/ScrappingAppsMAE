@@ -56,7 +56,7 @@ def download_apk(app_id):
 
 
 def obtain_list(collection, category, country):
-    result_list = scraper.list(collection=collection, category=category, num=1, lang='es', country=country,
+    result_list = scraper.list(collection=collection, category=category, num=50, lang='es', country=country,
                                fullDetail=True)
     return result_list
 
@@ -93,8 +93,8 @@ def my_link():
     collections_list.append('TOP_PAID')
     collections_list.append('TOP_PAID_GAMES')
     #
-    # collections_list.append('GROSSING')
-    # collections_list.append('TOP_GROSSING_GAMES')
+    collections_list.append('GROSSING')
+    collections_list.append('TOP_GROSSING_GAMES')
 
     # Listado de paises
     countries_list.append('us')
