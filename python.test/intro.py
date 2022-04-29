@@ -1,16 +1,15 @@
 import pandas as pd
-import plotly.express as px  # (version 4.7.0 or higher)
+import plotly.express as px
 import plotly.graph_objects as go
-from dash import Dash, dcc, html, Input, Output  # pip install dash (version 2.0.0 or higher)
+from dash import Dash, dcc, html, Input, Output
 from sqlalchemy import create_engine
-
-import pymysql
+from datetime import date
 
 app = Dash(__name__)
 
 # -- Import and clean data (importing from mysql into pandas)
 
-sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/testPy',
+sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData',
                           pool_recycle=3600)
 
 dbConnection = sqlEngine.connect()
@@ -29,6 +28,15 @@ app.layout = html.Div([
 
     html.H1("Web Application Dashboards with Dash", style={'text-align': 'center'}),
 
+    # Selector calendario
+    # dcc.DatePickerRange(
+    #     id='my-date-picker-range',
+    #     min_date_allowed=date(1995, 8, 5),
+    #     max_date_allowed=date(2017, 9, 19),
+    #     initial_visible_month=date(2017, 8, 5),
+    #     end_date=date(2017, 8, 25)
+    # ),
+    # html.Div(id='output-container-date-picker-range'),
     dcc.Dropdown(id="slct_year",
                  options=[
                      {"label": "2015", "value": 2015},
@@ -40,7 +48,6 @@ app.layout = html.Div([
                  style={'width': "40%"}
                  ),
 
-    html.Div(id='output_container', children=[]),
     html.Br(),
 
     dcc.Graph(id='my_bee_map', figure={})
@@ -59,7 +66,7 @@ def update_graph(option_slctd):
     print(option_slctd)
     print(type(option_slctd))
 
-    container = "The year chosen by user was: {}".format(option_slctd)
+    container = "El dia seleccionado ha sido: {}".format(option_slctd)
 
     dff = df.copy()
     dff = dff[dff["Year"] == option_slctd]
