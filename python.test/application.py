@@ -176,6 +176,17 @@ def my_link():
 
             result_list = obtain_list(collection, category, country)
 
+            if country == 'es':
+                country = 'ESP'
+            elif country == 'uk':
+                country = 'GRB'
+            elif country == 'cn':
+                country = 'CHN'
+            elif country == 'de':
+                country = 'DEU'
+            elif country == 'us':
+                country = 'USA'
+
             total_apps = []
             total_apps_collection = []
             cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
