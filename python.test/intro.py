@@ -1,3 +1,5 @@
+# coding=utf8
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -5,54 +7,110 @@ from dash import Dash, dcc, html, Input, Output
 from sqlalchemy import create_engine
 from datetime import date
 from datetime import datetime
+import dash
+import dash_bootstrap_components as dbc
 
-app = Dash(__name__)
+app = dash.Dash(external_stylesheets=[dbc.themes.LUX])
 
-# -- Import and clean data (importing from mysql into pandas)
+# Importamos los datos desde nuestro mysql
 
 sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
 
 dbConnection = sqlEngine.connect()
 
 df = pd.read_sql(
-    "SELECT TG.created, A.title, TG.position, TG.country from TOP_GROSSING TG INNER JOIN APPS A ON (A.appId = "
+    "SELECT TG.created, A.title, TG.position, TG.country, TG.appId from TOP_GROSSING TG INNER JOIN APPS A ON (A.appId = "
     "TG.appId)", con=dbConnection)
 
-dbConnection.close()
+titles_apps = pd.read_sql(
+    "SELECT A.title, TG.appId from TOP_GROSSING TG INNER JOIN APPS A ON (A.appId = "
+    "TG.appId) ORDER BY TG.created DESC", sqlEngine).to_dict(orient='records')
 
-# df = df.groupby(['State', 'ANSI', 'Affected by', 'Year', 'state_code'])[['Pct of Colonies Impacted']].mean()
-# df.reset_index(inplace=True)
-# print(df[:5])
+# Seleccionamos la fecha inicial de la base de datos (y fecha mínima a poder seleccionar)
+
+init_date = pd.read_sql(
+    "SELECT TG.created from TOP_GROSSING TG ORDER BY TG.created ASC LIMIT 1", sqlEngine)
+
+# Seleccionamos la fecha actual (y fecha máxima a poder seleccionar)
+
+last_date = pd.read_sql(
+    "SELECT TG.created from TOP_GROSSING TG ORDER BY TG.created DESC LIMIT 1", sqlEngine)
+
+init_date = init_date['created'].values[0]
+last_date = last_date['created'].values[0]
+dbConnection.close()
 
 # ------------------------------------------------------------------------------
 # App layout
+
+card = dbc.Card(
+    [
+        dbc.CardImg(src="/static/images/placeholder286x180.png", top=True),
+        dbc.CardBody(
+            [
+                html.H4("Card title", className="card-title"),
+                html.P(
+                    "Some quick example text to build on the card title and "
+                    "make up the bulk of the card's content.",
+                    className="card-text",
+                ),
+                dbc.Button("Go somewhere", color="primary"),
+            ]
+        ),
+    ],
+    style={"width": "18rem"},
+)
 app.layout = html.Div([
 
-    html.H1("Web Application Dashboards with Dash", style={'text-align': 'center'}),
+    html.H1("Aplicación web con Dash", style={'text-align': 'center'}),
 
-    # Selector calendario
-    dcc.DatePickerRange(
-        id='slct_year',
-        min_date_allowed=date(2022, 4, 23),
-        max_date_allowed=date(2022, 9, 29),
-        initial_visible_month=date(2022, 4, 1),
-        start_date=date(2022, 4, 27),
-        end_date=date(2022, 4, 28)
+    dbc.Row(
+        [
+
+            dbc.Col(dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H5("Selecciona fecha:", className="card-title",
+                                style={'padding-bottom': '20px', 'box-sizing': 'inherit'}),
+                        # Selector calendario
+                        dcc.DatePickerSingle(
+                            id='slct_year',
+                            min_date_allowed=init_date,
+                            max_date_allowed=last_date,
+                            initial_visible_month=date(2022, 4, 1),
+                            date=last_date,
+                            display_format='DD/MM/YYYY',
+                            style={'margin': 'auto'}
+                        ),
+
+                        dcc.Dropdown(id="slct_app",
+                                     options=[
+                                         {"label": i['title'], "value": i['appId']} for i in titles_apps],
+                                     multi=False,
+                                     value=None,
+                                     style={'width': "40%"}
+                                     ),
+
+                    ]
+                ),
+                className="cards"
+            ),
+                width={'size': 4, "offset": 0, 'order': 1}
+            ),
+            dbc.Col(dbc.Card(
+                dbc.CardBody(
+                    [
+                        dbc.CardHeader("Posición de la aplicación"),
+                        dcc.Graph(id='apps_map', figure={})
+                    ]
+                ),
+                className="cards"
+
+            ),
+                width={'size': 8, "offset": 0, 'order': 2}
+            ),
+        ]
     ),
-    html.Div(id='output_container'),
-    # dcc.Dropdown(id="slct_year",
-    #              options=[
-    #                  {"label": "28", "value": '2022-04-28'},
-    #                  {"label": "27", "value": '2022-04-27'}],
-    #              multi=False,
-    #              value='2022-04-28',
-    #              style={'width': "40%"}
-    #              ),
-    # html.Div(id='output_container', children=[]),
-
-    html.Br(),
-
-    dcc.Graph(id='apps_map', figure={})
 
 ])
 
@@ -60,62 +118,75 @@ app.layout = html.Div([
 # ------------------------------------------------------------------------------
 # Conectamos los graficos Plotly con los componentes Dash
 @app.callback(
-    [Output(component_id='output_container', component_property='children'),
-     Output(component_id='apps_map', component_property='figure')],
-    [Input(component_id='slct_year', component_property='start_date')]
+
+    Output(component_id='apps_map', component_property='figure'),
+    [Input(component_id='slct_year', component_property='date'),
+     Input(component_id='slct_app', component_property='value')]
 )
-def update_graph(option_slctd):
-    print(option_slctd)
-    print(type(option_slctd))
+def update_graph(date_selected, app_selected):
+    # container = "El dia seleccionado ha sido: {}".format(date_selected)
 
-    container = "El dia seleccionado ha sido: {}".format(option_slctd)
-
-    option_slctd = datetime.strptime(option_slctd, '%Y-%m-%d')
-    option_slctd = option_slctd.date()
-
-    print(option_slctd)
-    print(type(option_slctd))
+    date_selected = datetime.strptime(date_selected, '%Y-%m-%d')
+    date_selected = date_selected.date()
 
     dff = df.copy()
     print(dff.head())
-    dff = dff[dff.created == option_slctd]
-    print(dff.head())
-    dff = dff[dff.position == 1]
+
+    dff = dff[dff.created == date_selected]
     print(dff.head())
 
+    if app_selected is None:
+        dff = dff[dff.position == 1]
+    else:
+        dff = dff[dff.appId == app_selected]
+
+    print(dff.head())
 
     # Plotly Express
-    fig = px.choropleth(
-        data_frame=dff,
-        locations='country',
-        hover_name="country",
-        hover_data=['position', 'title'],
+    # fig = px.choropleth(
+    #     data_frame=dff,
+    #     locations='country',
+    #     hover_name="title",
+    #     labels={'position': 'Puesto de la aplicacion'},
+    #     color_continuous_scale=px.colors.sequential.Plasma,
+    #     range_color=(0, 50),
+    #     color='position'
+    # )
 
-        color_continuous_scale=px.colors.sequential.YlOrRd,
-        template='plotly_dark'
+    fig = go.Figure(data=go.Choropleth(
+        locations=dff['country'],
+        z=dff['position'].astype(int),
+        text=dff['title'],
+        zmin=0,
+        zmax=50,
+        colorscale='Reds',
+        autocolorscale=False,
+        reversescale=True,
+        marker_opacity=0.5,
+        marker_line_width=0,
+        colorbar_title='Puesto',
+    ))
+
+    fig.update_layout(
+        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+        geo=dict(
+            showframe=False,
+            showcoastlines=False,
+            projection_type='equirectangular'
+        ),
+        annotations=[dict(
+            x=0.55,
+            y=0.1,
+            xref='paper',
+            yref='paper',
+            text='Tabla: TOP_GROSSING',
+            showarrow=False
+        )]
     )
 
-    # Plotly Graph Objects (GO)
-    # fig = go.Figure(
-    #     data=[go.Choropleth(
-    #         locationmode='USA-states',
-    #         locations=dff['state_code'],
-    #         z=dff["Pct of Colonies Impacted"].astype(float),
-    #         colorscale='Reds',
-    #     )]
-    # )
-    #
-    # fig.update_layout(
-    #     title_text="Bees Affected by Mites in the USA",
-    #     title_xanchor="center",
-    #     title_font=dict(size=24),
-    #     title_x=0.5,
-    #     geo=dict(scope='usa'),
-    # )
-
-    return container, fig
+    return fig
 
 
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0', port=8080)
+    app.run_server(debug=True, host='0.0.0.0', port=8080, threaded=True, dev_tools_hot_reload=True)
