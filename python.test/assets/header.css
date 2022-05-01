@@ -13,3 +13,14 @@
     padding: 5px;
     margin: 15px;
 }
+
+.top_bar {
+    text-align: center;
+    display: flex;
+    align-items: flex-end;
+
+}
+
+.index_tabs {
+    text-align: right;
+}
