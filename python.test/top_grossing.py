@@ -125,16 +125,6 @@ top_grossing_layout = html.Div([
 #
 #     print(dff.head())
 #
-#     # Plotly Express
-#     # fig = px.choropleth(
-#     #     data_frame=dff,
-#     #     locations='country',
-#     #     hover_name="title",
-#     #     labels={'position': 'Puesto de la aplicacion'},
-#     #     color_continuous_scale=px.colors.sequential.Plasma,
-#     #     range_color=(0, 50),
-#     #     color='position'
-#     # )
 #
 #     fig = go.Figure(data=go.Choropleth(
 #         locations=dff['country'],
