@@ -1,2 +1,0 @@
-class ScraperException(Exception):
-    pass

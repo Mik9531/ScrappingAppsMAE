@@ -2,10 +2,24 @@
 
 FROM python:3
 
-# Copy local code to the container image.
-WORKDIR /python.test
 
-ENV PORT 8080
+
+# Copy local code to the container image.
+RUN mkdir -p /home/flask_app/helloworld
+WORKDIR /home/flask_app/helloworld
+
+#COPY requirements.txt ./
+#RUN pip install -r requirements.txt
+
+COPY templates /home/flask_app/helloworld/templates
+
+
+COPY application.py wsgi.py boot.sh ./
+RUN chmod +x boot.sh
+
+ENV PORT 5000
+
+ENV FLASK_APP application.py
 
 
 RUN apt-get update && apt-get install -y \
@@ -22,11 +36,11 @@ RUN pip install pymysql
 RUN pip install beautifulsoup4
 RUN pip install requests
 RUN pip install pyaxmlparser
-RUN pip install Flask-RESTful
-RUN pip install Flask-WTF
+RUN pip install wheel
+RUN pip install gunicorn flask
 
 
-COPY . /python.test
+EXPOSE 5000
+ENTRYPOINT ["./boot.sh"]
 
 
-CMD [ "python", "application.py" ]

@@ -1,12 +1,12 @@
+# coding=utf8
+
 from flask import Flask, render_template
-import os
 import time
 import scraper
 import pymysql
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 import requests
-from pyaxmlparser import APK
 
 application = app = Flask(__name__)
 
@@ -55,8 +55,8 @@ def download_apk(app_id):
         print('No results')
 
 
-def obtain_list(collection, category, country):
-    result_list = scraper.list(collection=collection, category=category, num=50, lang='es', country=country,
+def obtain_list(collection, category_app, country):
+    result_list = scraper.list(collection=collection, category=category_app, num=50, lang='es', country=country,
                                fullDetail=True)
     return result_list
 
@@ -66,9 +66,14 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/testGraphs/')
+def create_graphs():
+    return render_template('index.html')
+
+
 @app.route('/listadoApks/')
 def my_link():
-    global category
+    global category, countries_list_actual
     start_time = time.time()
 
     # Creamos la conexion a la base de datos
@@ -76,7 +81,7 @@ def my_link():
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
-                                 db='testPy',
+                                 db='test',
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
@@ -89,10 +94,10 @@ def my_link():
 
     collections_list.append('TOP_FREE')
     collections_list.append('TOP_FREE_GAMES')
-
+    #
     collections_list.append('TOP_PAID')
     collections_list.append('TOP_PAID_GAMES')
-
+    #
     collections_list.append('GROSSING')
     collections_list.append('TOP_GROSSING_GAMES')
 
@@ -107,7 +112,7 @@ def my_link():
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS " + 'APPS' + "(`appId` varchar(255) NOT NULL PRIMARY KEY,`title` varchar(255) "
                                                  "DEFAULT NULL,`created` datetime DEFAULT NULL, `updated` datetime "
-                                                 "DEFAULT NULL, `score` float(255,2) DEFAULT NULL, `summary` varchar("
+                                                 "DEFAULT NULL, `summary` varchar("
                                                  "255) DEFAULT NULL, `description` varchar(255) DEFAULT NULL, "
                                                  "`installs` varchar(255) DEFAULT NULL, `maxInstalls` int(255) "
                                                  "DEFAULT NULL, `ratings` varchar(255) DEFAULT NULL, "
@@ -142,7 +147,13 @@ def my_link():
 
     # Creamos la tabla de imagenes relacionadas si no existe
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS " + 'SCREENSHOTS' + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),urlScreenshot VARCHAR(255))")
+        "CREATE TABLE IF NOT EXISTS " + 'SCREENSHOTS' + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
+                                                        "urlScreenshot VARCHAR(255))")
+
+    # Creamos la tabla de puntuaciones
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS " + 'SCORES' + "(appId VARCHAR(255) PRIMARY KEY, "
+                                                   "score float(255,2), created DATE)")
 
     for collection in collections_list:
 
@@ -151,8 +162,7 @@ def my_link():
         elif collection == 'APPLICATION':
             table_colection = 'TOP_APPLICATIONS'
             category = collection
-            countries_list_actual = []
-            countries_list_actual.append('us')
+            countries_list_actual = ['us']
             collection = None
         else:
             table_colection = collection
@@ -168,6 +178,17 @@ def my_link():
 
             result_list = obtain_list(collection, category, country)
 
+            if country == 'es':
+                country = 'ESP'
+            elif country == 'uk':
+                country = 'GRB'
+            elif country == 'cn':
+                country = 'CHN'
+            elif country == 'de':
+                country = 'DEU'
+            elif country == 'us':
+                country = 'USA'
+
             total_apps = []
             total_apps_collection = []
             cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
@@ -176,6 +197,25 @@ def my_link():
                 for actual_app in result_list:
                     total_relateds = []
                     total_screenshots = []
+                    total_scores = []
+
+                    # Guardamos la puntuacion de la aplicacion actual
+                    score_get = actual_app.get('score')
+                    if score_get is not None:
+                        score = round(actual_app['score'], 2)
+                        data_scores = (actual_app['appId'],
+                                       score
+                                       )
+                        total_scores.append(data_scores)
+
+                        sql = "INSERT INTO SCORES (appId," \
+                              "score, created) VALUES (%s,%s,NOW()) ON " \
+                              "DUPLICATE KEY UPDATE created = NOW()"
+
+                        val = total_scores
+                        cursor.executemany(sql, val)
+                        connection.commit()
+                        print(cursor.rowcount, "puntuacion insertada")
 
                     # Guardamos las urls de las capturas de la aplicacion actual
                     if actual_app['screenshots'] is not None:
@@ -194,26 +234,39 @@ def my_link():
                         print(cursor.rowcount, "capturas insertadas.")
 
                     # Obtenemos las 5 primeras aplicaciones similares a la aplicacion actual
-                    try:
-                        similars = scraper.similar(actual_app['appId'], lang='es', fullDetail=False)
-                    except Exception:
-                        similars = None
-                    if similars is not None:
-                        five_similars = similars[0:5]
 
-                        for actual_similar in five_similars:
-                            data_relateds = (actual_app['appId'],
-                                             actual_similar['appId']
-                                             )
-                            total_relateds.append(data_relateds)
+                    # Buscamos si existe en la tabla esa aplicacion, para no repetir la insercion
 
-                        sql = "INSERT INTO RELATEDS(appId," \
-                              "relatedApp) VALUES (%s,%s)"
+                    sql = "SELECT appId FROM RELATEDS WHERE appId = %s"
 
-                        val = total_relateds
-                        cursor.executemany(sql, val)
-                        connection.commit()
-                        print(cursor.rowcount, "relacionados insertados.")
+                    val = actual_app['appId']
+
+                    cursor.execute(sql, val)
+
+                    app_id = cursor.fetchone()
+
+                    if app_id is None:
+
+                        try:
+                            similars = scraper.similar(actual_app['appId'], lang='es', fullDetail=False)
+                        except Exception:
+                            similars = None
+                        if similars is not None:
+                            five_similars = similars[0:5]
+
+                            for actual_similar in five_similars:
+                                data_relateds = (actual_app['appId'],
+                                                 actual_similar['appId']
+                                                 )
+                                total_relateds.append(data_relateds)
+
+                            sql = "INSERT INTO RELATEDS(appId," \
+                                  "relatedApp) VALUES (%s,%s)"
+
+                            val = total_relateds
+                            cursor.executemany(sql, val)
+                            connection.commit()
+                            print(cursor.rowcount, "relacionados insertados.")
 
                     # Obtenemos los permisos de la aplicacion actual
 
@@ -273,7 +326,8 @@ def my_link():
 
                         sql = "INSERT INTO PERMISSIONS(appId," \
                               "Location, Calendar, Microphone, Contacts, DeviceHistory, Camera, Storage, WiFi, " \
-                              "PhotosMediaFiles, Phone, DeviceID, SMS, Identity ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s," \
+                              "PhotosMediaFiles, Phone, DeviceID, SMS, Identity ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s," \
+                              "%s," \
                               "%s,%s,%s,%s) "
 
                         val = total_permissions
@@ -328,7 +382,8 @@ def my_link():
                         connection.commit()
                         print(cursor.rowcount, "comentarios insertados.")
 
-                    # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk) (actualmente desactivado por demora)
+                    # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk) (
+                    # actualmente desactivado por demora)
 
                     # sql = "SELECT packageName FROM APPS WHERE appId = %s"
                     #
@@ -357,16 +412,11 @@ def my_link():
                     #     package_name = None
 
                     # Guardamos la aplicacion
-                    score = actual_app.get('score')
                     ratings = actual_app.get('ratings')
                     reviews = actual_app.get('reviews')
 
-                    if score is not None:
-                        score = round(score, 2)
-
                     apps = (actual_app['appId'],
                             actual_app['title'],
-                            score,
                             actual_app['summary'],
                             actual_app['description'].encode(),
                             actual_app['installs'],
@@ -396,7 +446,6 @@ def my_link():
 
                 sql = "INSERT INTO APPS (appId," \
                       "title," \
-                      "score," \
                       "summary," \
                       "description," \
                       "installs," \
@@ -416,10 +465,9 @@ def my_link():
                       "editorsChoice," \
                       "url," \
                       "icon," \
-                      "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON " \
+                      "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON " \
                       "DUPLICATE KEY UPDATE updated = NOW()," \
                       "title=VALUES(title), " \
-                      "score=VALUES(score), " \
                       "summary=VALUES(summary), " \
                       "description=VALUES(description), " \
                       "installs=VALUES(installs), " \
@@ -456,4 +504,4 @@ def my_link():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run()
