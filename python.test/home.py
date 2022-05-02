@@ -1,20 +1,44 @@
 # coding=utf8
-
-from dash import Dash, dcc, html, Input, Output
+from dash import Dash, dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
-from sqlalchemy import create_engine
-import pandas as pd
-from app import app
-from datetime import date
-
-# Seleccionamos la fecha actual (y fecha máxima a poder seleccionar)
-sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
-
-dbConnection = sqlEngine.connect()
-last_date = pd.read_sql(
-    "SELECT TG.created from TOP_GROSSING TG ORDER BY TG.created DESC LIMIT 1", sqlEngine)
+from app import app, top_apps, last_date
 
 # ------------------------------------------------------------------------------
+
+output_cards = []
+
+cont_list_top_apps = len(top_apps.to_dict('records'))
+
+for i in range(cont_list_top_apps):
+    output_cards.append(dbc.Card(
+        [
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.CardImg(
+                            src=top_apps['icon'].values[i],
+                        ), class_name="card-img"
+                    ),
+                    dbc.Col(
+                        dbc.CardBody(
+                            [
+                                html.H4(top_apps['title'].values[i], className="card-title"),
+                                html.P(
+                                    top_apps['summary'].values[i],
+                                    className="card-text",
+                                ),
+                                html.Small(
+                                    "Puesto #" + str(top_apps['position'].values[i]),
+                                    className="card-text text-muted",
+                                ),
+                            ]
+                        ),
+                    ),
+                ], className="top-apps"
+            ),
+        ],
+
+    ))
 
 home_layout = html.Div([
 
@@ -26,11 +50,12 @@ home_layout = html.Div([
         ]), className="cards"
     ),
 
-    html.Hr(),
-
     dbc.Card(
         dbc.CardBody(
-            html.H1("Aplicación web con Dash Home", style={'text-align': 'center'})
+            dbc.Row(
+                [
+                    dbc.Col(
+                        output_cards)], class_name="top-apps-row"),
         ), className="cards"
     ),
 
@@ -42,7 +67,7 @@ home_layout = html.Div([
     Input('url', 'pathname')
 
 )
-def get_date(pathname):
+def get_home_data(pathname):
     container = "{}".format(last_date['created'][0])
 
     return container
