@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # called by Dockerfile
 
 # go to directory where wsgi.py is

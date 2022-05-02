@@ -1,5 +1,5 @@
 # coding=utf8
-
+from datetime import date, datetime
 from flask import Flask, render_template
 import time
 import scraper
@@ -81,7 +81,7 @@ def my_link():
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
-                                 db='test',
+                                 db='appsData',
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
@@ -152,7 +152,7 @@ def my_link():
 
     # Creamos la tabla de puntuaciones
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS " + 'SCORES' + "(appId VARCHAR(255) PRIMARY KEY, "
+        "CREATE TABLE IF NOT EXISTS " + 'SCORES' + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255), "
                                                    "score float(255,2), created DATE)")
 
     for collection in collections_list:
@@ -199,23 +199,42 @@ def my_link():
                     total_screenshots = []
                     total_scores = []
 
-                    # Guardamos la puntuacion de la aplicacion actual
-                    score_get = actual_app.get('score')
-                    if score_get is not None:
-                        score = round(actual_app['score'], 2)
-                        data_scores = (actual_app['appId'],
-                                       score
-                                       )
-                        total_scores.append(data_scores)
+                    # Guardamos la puntuacion de la aplicacion actual si es de un día diferente al actual
 
-                        sql = "INSERT INTO SCORES (appId," \
-                              "score, created) VALUES (%s,%s,NOW()) ON " \
-                              "DUPLICATE KEY UPDATE created = NOW()"
+                    sql = "SELECT created FROM SCORES WHERE appId = %s"
 
-                        val = total_scores
-                        cursor.executemany(sql, val)
-                        connection.commit()
-                        print(cursor.rowcount, "puntuacion insertada")
+                    val = actual_app['appId']
+
+                    cursor.execute(sql, val)
+
+                    created_date = cursor.fetchone()
+
+                    if created_date is not None:
+
+                        created_date = str(created_date['created'])
+
+                    else:
+                        created_date = None
+
+                    current_date = datetime.today().strftime('%Y-%m-%d')
+
+                    if created_date != current_date:
+
+                        score_get = actual_app.get('score')
+                        if score_get is not None:
+                            score = round(actual_app['score'], 2)
+                            data_scores = (actual_app['appId'],
+                                           score
+                                           )
+                            total_scores.append(data_scores)
+
+                            sql = "INSERT INTO SCORES (appId," \
+                                  "score, created) VALUES (%s,%s,NOW())"
+
+                            val = total_scores
+                            cursor.executemany(sql, val)
+                            connection.commit()
+                            print(cursor.rowcount, "puntuacion insertada")
 
                     # Guardamos las urls de las capturas de la aplicacion actual
                     if actual_app['screenshots'] is not None:

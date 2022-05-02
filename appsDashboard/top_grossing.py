@@ -27,7 +27,7 @@ top_grossing_layout = html.Div([
                 dbc.CardBody(
                     [
                         html.P("Selecciona la fecha:", className="card-title",
-                                style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
+                               style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
                         # Selector calendario
                         dcc.DatePickerSingle(
                             id='slct_year',
@@ -40,7 +40,7 @@ top_grossing_layout = html.Div([
                         ),
 
                         html.P("Selecciona la aplicación:", className="card-title",
-                               style={'padding-bottom': '15px', 'box-sizing': 'inherit', "margin-top":"15px"}),
+                               style={'padding-bottom': '15px', 'box-sizing': 'inherit', "margin-top": "15px"}),
                         dcc.Dropdown(id="slct_app",
                                      options=[
                                          {"label": i['title'], "value": i['appId']} for i in titles_apps],

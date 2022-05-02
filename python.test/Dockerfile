@@ -5,13 +5,10 @@ FROM python:3
 
 
 # Copy local code to the container image.
-RUN mkdir -p /home/flask_app/helloworld
-WORKDIR /home/flask_app/helloworld
+RUN mkdir -p /home/flask_app/listadoApks
+WORKDIR /home/flask_app/listadoApks
 
-#COPY requirements.txt ./
-#RUN pip install -r requirements.txt
-
-COPY templates /home/flask_app/helloworld/templates
+COPY templates /home/flask_app/listadoApks/templates
 
 
 COPY application.py wsgi.py boot.sh ./
@@ -41,6 +38,6 @@ RUN pip install gunicorn flask
 
 
 EXPOSE 5000
-ENTRYPOINT ["./boot.sh"]
+ENTRYPOINT ["sh", "./boot.sh"]
 
 

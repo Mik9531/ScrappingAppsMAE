@@ -15,7 +15,7 @@ link_tabs_layout = html.Div([
     dbc.Row([
         dbc.Col(dcc.Link('Home', href='/', className="a-tabs"), className="col-tab"),
         dbc.Col(dcc.Link('Mapa Ingresos', href='/top-grossing', className="a-tabs"), className="col-tab"),
-        dbc.Col(dcc.Link('Mapa Ingresos', href='/obtain', className="a-tabs"), className="col-tab")
+        dbc.Col(dcc.Link('Scraping', href='/obtain', className="a-tabs"), className="col-tab")
     ], className="index-tabs"
     )
 ])
