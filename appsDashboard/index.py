@@ -20,6 +20,9 @@ link_tabs_layout = html.Div([
     )
 ])
 
+
+server = app.server
+
 # Layout
 app.layout = html.Div([
     dbc.Row(
@@ -68,4 +71,4 @@ def switch_tab(pathname):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0', port=8080, threaded=True, dev_tools_hot_reload=True)
+    app.run_server(debug=True, host='0.0.0.0', port=5000, threaded=True, dev_tools_hot_reload=True)

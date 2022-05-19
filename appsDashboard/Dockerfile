@@ -1,0 +1,32 @@
+# Dockerfile, Image, Container
+
+FROM python:3.10
+
+
+
+# Copy local code to the container image.
+RUN mkdir -p /home/dashboard
+WORKDIR /home/dashboard
+
+COPY assets /home/dashboard/assets
+
+
+COPY index.py app.py boot.sh home.py listado_apks.py top_grossing.py requirements.txt ./
+RUN chmod +x boot.sh
+
+
+
+RUN pip install dash-iconify==0.1.2
+RUN pip install -r requirements.txt
+RUN pip install gunicorn
+
+
+ENV PORT 5000
+
+
+
+EXPOSE 5000
+
+CMD gunicorn -w 4 -b 0.0.0.0:5000 index:server
+
+
