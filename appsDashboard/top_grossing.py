@@ -18,7 +18,7 @@ last_date = last_date['created'].values[0]
 top_grossing_layout = html.Div([
 
     dbc.Alert("Si no se ha seleccionado ninguna aplicación, se mostrará la aplicación #1 de cada país",
-              color="primary", dismissable=True, is_open=True, style={"text-align": "center"}),
+              color="primary", dismissable=True, is_open=True, style={"textAlign": "center"}),
 
     dbc.Row(
         [

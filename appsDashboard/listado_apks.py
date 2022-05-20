@@ -17,14 +17,14 @@ obtain_layout = html.Div([
                     [
                         "Al pulsar en el botón obtener se realizará el scraping de todas las aplicaciones"
                     ],
-                    color="danger", style={"text-align": "center"},
+                    color="danger", style={"textAlign": "center"},
                 ),
             ),
             dbc.Row(
                 dcc.Link(html.Button('Realizar scraping'),
                          href='http://dockerflaskpython-env.eba-4mvjtpq7.us-east-2.elasticbeanstalk.com/',
                          target="_blank"),
-                style={"text-align": "center"},
+                style={"textAlign": "center"},
             )
         ]), className="cards"
     ),

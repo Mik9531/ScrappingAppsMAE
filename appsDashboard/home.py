@@ -44,10 +44,25 @@ home_layout = html.Div([
 
     dbc.Card(
         dbc.CardBody([
-            html.H3("¡Bienvenido a los resultados del scraping!", style={'text-align': 'left'}),
+            html.H3("¡Bienvenido a los resultados del scraping!", style={'textAlign': 'left'}),
             html.P("En esta página encontrarás todos los datos asociados al scraping realizado hasta el día:"),
             html.Div(id='date_home', children=[]),
         ]), className="cards"
+    ),
+
+    dbc.Row(
+        [
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        html.Iframe(srcDoc='''
+           <a class="twitter-timeline" href="https://twitter.com/GooglePlay?ref_src=twsrc%5Etfw">Tweets by GooglePlay</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+        ''',
+                                    style={"height": "600px", "width": "100%"})
+                    ]), className="cards"
+                ), width={'size': 4, "offset": 8, 'order': 1}),
+        ]
+
     ),
 
     dbc.Card(
@@ -67,6 +82,8 @@ home_layout = html.Div([
     Input('url', 'pathname')
 
 )
+
+
 def get_home_data(pathname):
     container = "{}".format(last_date['created'][0])
 
