@@ -82,7 +82,7 @@ home_layout = html.Div([
                         dbc.Card(
                             dbc.CardBody([
                                 html.P(
-                                    "Aplicaciones descargadas actualmente:"),
+                                    "Aplicaciones analizadas actualmente:"),
                                 html.Div('123'),
 
                             ]), className="cards"
