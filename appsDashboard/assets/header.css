@@ -1,11 +1,18 @@
-html, body {
-    min-height: 100%;
-    min-width: 100%;
+
+
+@media all and (max-width: 1020px) {
+    body {
+        width: 100%;
+    }
 }
 
 
 body {
     background-color: #eeeeee;
+}
+
+.home {
+    min-width: 95%;
 }
 
 .hr {
@@ -44,12 +51,18 @@ body {
 }
 
 .cards {
-    padding: 5px;
-    margin: 20px;
+    padding: 4px;
+    margin: 15px;
+}
+
+.slider {
+    padding: 3px;
+    margin: 10px;
 }
 
 .top-bar {
     background-color: #f1f1f1;
+    width: 100%;
 
 }
 
@@ -59,6 +72,7 @@ body {
     flex: auto;
     cursor: pointer;
     text-align: center;
+    min-width: 100%;
 
 
 }

@@ -42,39 +42,84 @@ for i in range(cont_list_top_apps):
 
 home_layout = html.Div([
 
-    dbc.Card(
-        dbc.CardBody([
-            html.H3("¡Bienvenido a los resultados del scraping!", style={'textAlign': 'left'}),
-            html.P("En esta página encontrarás todos los datos asociados al scraping realizado hasta el día:"),
-            html.Div(id='date_home', children=[]),
-        ]), className="cards"
+    dbc.Row(
+        [
+            dbc.Col(
+                dbc.Carousel(
+                    items=[
+                        {
+                            "key": "1",
+                            "src": "https://picsum.photos/800/400",
+                            "caption": "and caption",
+                        },
+                        {
+                            "key": "2",
+                            "src": "https://picsum.photos/800/400",
+                            "caption": "",
+                        },
+                        {
+                            "key": "3",
+                            "src": "https://picsum.photos/800/400",
+                            "caption": "This slide has a caption only",
+                        },
+                    ], interval=5000,
+                    ride="carousel",
+                    className="slider"
+                ), width={'size': 8, "offset": 0, 'order': 1}),
+
+            dbc.Col(
+                dbc.Row(
+                    [
+
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.H3("¡Bienvenido a los resultados del scraping!", style={'textAlign': 'left'}),
+                                html.P(
+                                    "En esta página encontrarás todos los datos asociados al scraping realizado hasta el día:"),
+                                html.Div(id='date_home', children=[]),
+                            ]), className="cards"
+                        ),
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.P(
+                                    "Aplicaciones descargadas actualmente:"),
+                                html.Div('123'),
+
+                            ]), className="cards"
+                        ), ])
+
+                , width={'size': 4, "offset": 0, 'order': 2}),
+        ]
+
     ),
 
     dbc.Row(
         [
             dbc.Col(
                 dbc.Card(
+                    dbc.CardBody(
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    output_cards)], class_name="top-apps-row"),
+                    ), className="cards"
+                ), width={'size': 9, "offset": 0, 'order': 1}),
+
+            dbc.Col(
+                dbc.Card(
                     dbc.CardBody([
                         html.Iframe(srcDoc='''
-           <a class="twitter-timeline" href="https://twitter.com/GooglePlay?ref_src=twsrc%5Etfw">Tweets by GooglePlay</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-        ''',
-                                    style={"height": "600px", "width": "100%"})
+                           <a class="twitter-timeline" href="https://twitter.com/GooglePlay?ref_src=twsrc%5Etfw">Tweets by GooglePlay</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                        ''',
+                                    style={"height": "700px", "width": "100%"})
                     ]), className="cards"
-                ), width={'size': 4, "offset": 8, 'order': 1}),
-        ]
+                ), width={'size': 3, "offset": 0, 'order': 2})
 
-    ),
+        ])
 
-    dbc.Card(
-        dbc.CardBody(
-            dbc.Row(
-                [
-                    dbc.Col(
-                        output_cards)], class_name="top-apps-row"),
-        ), className="cards"
-    ),
-
-])
+]
+    , className="home"
+)
 
 
 @app.callback(
@@ -82,8 +127,6 @@ home_layout = html.Div([
     Input('url', 'pathname')
 
 )
-
-
 def get_home_data(pathname):
     container = "{}".format(last_date['created'][0])
 
