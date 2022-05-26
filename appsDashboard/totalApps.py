@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from dash import dcc, html, Input, Output
 
 from app import app, last_date, init_date, titles_apps, top_grossing_apps
+from dash_iconify import DashIconify
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
@@ -15,57 +16,114 @@ last_date = last_date['created'].values[0]
 # App layout
 
 
-top_grossing_layout = html.Div([
-
-    dbc.Alert("Si no se ha seleccionado ninguna aplicación, se mostrará la aplicación #1 de cada país",
-              color="primary", dismissable=True, is_open=True, style={"textAlign": "center"}),
+apps_layout = html.Div([
 
     dbc.Row(
         [
 
-            dbc.Col(dbc.Card(
-                dbc.CardBody(
+            dbc.Col(
+                dbc.Row(
                     [
-                        html.P("Selecciona la fecha:", className="card-title",
-                               style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
-                        # Selector calendario
-                        dcc.DatePickerSingle(
-                            id='slct_year',
-                            min_date_allowed=init_date,
-                            max_date_allowed=last_date,
-                            initial_visible_month=date(2022, 4, 1),
-                            date=last_date,
-                            display_format='DD/MM/YYYY',
-                            style={'margin': 'auto'}
+
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+
+                                    html.P("Selecciona la aplicación:", className="card-title",
+                                           style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
+                                    dcc.Dropdown(id="slct_app",
+                                                 options=[
+                                                     {"label": i['title'], "value": i['appId']} for i in titles_apps],
+                                                 multi=False,
+                                                 value='tv.twitch.android.app',
+                                                 optionHeight=40,
+                                                 placeholder='Selecciona...',
+                                                 clearable=False,
+                                                 style={'width': "100%"}
+                                                 ),
+
+                                ]
+                            ),
+                            className="cards"
                         ),
 
-                        html.P("Selecciona la aplicación:", className="card-title",
-                               style={'padding-bottom': '15px', 'box-sizing': 'inherit', "margin-top": "15px"}),
-                        dcc.Dropdown(id="slct_app",
-                                     options=[
-                                         {"label": i['title'], "value": i['appId']} for i in titles_apps],
-                                     multi=False,
-                                     value=None,
-                                     style={'width': "100%"}
-                                     ),
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
 
+                                    dbc.Row(
+                                        [
+
+                                            dbc.Col(
+
+                                                html.Img(id='output_img', height='350px', width='350px'),
+                                                width={'size': 7, "offset": 0, 'order': 1}
+                                            ),
+
+                                            dbc.Col(
+                                                [
+
+                                                    dbc.Row(
+
+                                                        html.H5(id="output_title", className="card-title",
+                                                                ),
+
+                                                    ),
+                                                    html.Br(),
+
+                                                    dbc.Row(
+
+                                                        html.P(id="output_summary", className="card-title",
+                                                               ),
+
+                                                    ),
+                                                    html.Br(),
+
+                                                    dbc.Row(
+
+                                                        html.P(id="output_score", className="card-title",
+                                                               ),
+
+                                                    ),
+                                                    html.Br(),
+
+                                                    dbc.Row(
+
+                                                        html.P(id="output_developer", className="card-title",
+                                                               ),
+
+                                                    ),
+                                                    html.Br(),
+
+                                                    dbc.Row(
+
+                                                        html.Div(id="output_url"
+
+                                                                 ))],
+
+                                                width={'size': 5, "offset": 0, 'order': 1}
+                                            ),
+                                        ])
+
+                                ]
+                            ),
+                            className="cards"
+                        )
                     ]
                 ),
-                className="cards"
-            ),
-                width={'size': 4, "offset": 0, 'order': 1}
+                width={'size': 5, "offset": 0, 'order': 1}
             ),
             dbc.Col(dbc.Card(
                 dbc.CardBody(
                     [
-                        dbc.CardHeader("Posición de la aplicación"),
-                        dcc.Graph(id='apps_map', figure={})
+                        dbc.CardHeader("Puntuación de la aplicación en el tiempo"),
+                        dcc.Graph(id='apps_map2', figure={})
                     ]
                 ),
                 className="cards"
 
             ),
-                width={'size': 8, "offset": 0, 'order': 2}
+                width={'size': 7, "offset": 0, 'order': 2}
             ),
         ]
     ),
@@ -77,18 +135,16 @@ top_grossing_layout = html.Div([
 # Conectamos los graficos Plotly con los componentes Dash
 @app.callback(
 
-    Output(component_id='apps_map', component_property='figure'),
-    [Input(component_id='slct_year', component_property='date'),
-     Input(component_id='slct_app', component_property='value')]
+    [Output('output_img', 'src'),
+     Output('output_title', 'children'),
+     Output('output_summary', 'children'),
+     Output('output_score', 'children'),
+     Output('output_developer', 'children'),
+     Output('output_url', 'children')],
+    Input(component_id='slct_app', component_property='value')
 )
-def update_graph(date_selected, app_selected):
-    date_selected = datetime.strptime(date_selected, '%Y-%m-%d')
-    date_selected = date_selected.date()
-
+def update_graph(app_selected):
     dff = top_grossing_apps.copy()
-    print(dff.head())
-
-    dff = dff[dff.created == date_selected]
     print(dff.head())
 
     if app_selected is None:
@@ -96,37 +152,33 @@ def update_graph(date_selected, app_selected):
     else:
         dff = dff[dff.appId == app_selected]
 
+    dff = dff[dff.country == 'USA']
+
+    dff = dff.iloc[-1:]
+
+    if dff.empty is False:
+        url_img = dff.icon.values[0]
+        app_title = dff.title.values[0]
+        app_summary = dff.summary.values[0]
+        app_score = dff.score.values[0]
+        app_developer = dff.developer.values[0]
+        app_url = dff.url.values[0]
+    else:
+        url_img = "https://plantillasdememes.com/img/plantillas/imagen-no-disponible01601774755.jpg"
+        app_title = "No disponible"
+        app_summary = "No disponible"
+        app_score = "No disponible"
+        app_developer = "No disponible"
+        app_url = "/"
+
+    div_url = html.Div(dcc.Link(DashIconify(
+        icon="logos:google-play",
+    ),
+        id="output_url",
+        href=app_url,
+        target="_blank"), style={"width": "35%"}
+
+    )
     print(dff.head())
 
-    fig = go.Figure(data=go.Choropleth(
-        locations=dff['country'],
-        z=dff['position'].astype(int),
-        text=dff['title'],
-        zmin=0,
-        zmax=50,
-        colorscale='Reds',
-        autocolorscale=False,
-        reversescale=True,
-        marker_opacity=0.5,
-        marker_line_width=0,
-        colorbar_title='Puesto',
-    ))
-
-    fig.update_layout(
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        geo=dict(
-            showframe=False,
-            showcoastlines=False,
-            projection_type='equirectangular'
-        ),
-        annotations=[dict(
-            x=0.55,
-            y=0.1,
-            xref='paper',
-            yref='paper',
-            text='Tabla: TOP_GROSSING',
-            showarrow=False
-        )]
-    )
-
-    return fig
+    return url_img, app_title, app_summary, app_score, app_developer, div_url

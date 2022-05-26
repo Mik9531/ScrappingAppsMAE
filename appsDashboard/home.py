@@ -1,7 +1,7 @@
 # coding=utf8
 from dash import Dash, dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
-from app import app, top_apps, last_date
+from app import app, top_apps, last_date, top10Free_apps
 
 # ------------------------------------------------------------------------------
 
@@ -48,20 +48,13 @@ home_layout = html.Div([
                 dbc.Carousel(
                     items=[
                         {
-                            "key": "1",
-                            "src": "https://picsum.photos/800/400",
-                            "caption": "and caption",
-                        },
-                        {
-                            "key": "2",
-                            "src": "https://picsum.photos/800/400",
-                            "caption": "",
-                        },
-                        {
-                            "key": "3",
-                            "src": "https://picsum.photos/800/400",
-                            "caption": "This slide has a caption only",
-                        },
+                            "key": i['position'],
+                            "src": i['icon'],
+                            "caption": i['title'],
+                            "img_style": {"max-height": "600px", "max-width": "1400px"},
+                            "caption_class_name": 'caption'
+                        } for i in top10Free_apps
+
                     ], interval=5000,
                     ride="carousel",
                     className="slider"

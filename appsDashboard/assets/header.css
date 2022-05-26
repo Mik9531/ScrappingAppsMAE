@@ -1,8 +1,6 @@
-
-
 @media all and (max-width: 1020px) {
     body {
-        width: 100%;
+        width: 90%;
     }
 }
 
@@ -17,6 +15,12 @@ body {
 
 .hr {
     opacity: 0;
+}
+
+.page-content{
+    max-width: 80%;
+	margin: 0 auto !important;
+	float: none !important;
 }
 
 .a-tabs {
@@ -51,19 +55,25 @@ body {
 }
 
 .cards {
-    padding: 4px;
-    margin: 15px;
+    padding: 3px;
+    margin: 10px;
 }
 
 .slider {
-    padding: 3px;
     margin: 10px;
+    align-items: flex-start;
 }
 
 .top-bar {
     background-color: #f1f1f1;
     width: 100%;
 
+}
+
+.caption {
+    color: #fff;
+    text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+    font-size: 30px;
 }
 
 .index-tabs {

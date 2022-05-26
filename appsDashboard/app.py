@@ -11,12 +11,12 @@ sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us
 dbConnection = sqlEngine.connect()
 
 top_grossing_apps = pd.read_sql(
-    "SELECT TG.created, A.title, TG.position, TG.country, TG.appId from TOP_GROSSING TG INNER JOIN APPS A ON (A.appId "
+    "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_GROSSING TG INNER JOIN APPS A ON (A.appId "
     "= "
     "TG.appId)", con=dbConnection)
 
 titles_apps = pd.read_sql(
-    "SELECT TG.created, A.title, TG.appId from TOP_GROSSING TG INNER JOIN APPS A ON (A.appId = TG.appId) GROUP BY TG.appId ORDER BY A.title ASC",
+    "SELECT TG.created, A.title, A.icon, TG.appId from TOP_GROSSING TG INNER JOIN APPS A ON (A.appId = TG.appId) GROUP BY TG.appId ORDER BY A.title ASC",
     sqlEngine).to_dict(orient='records')
 
 top_apps = pd.read_sql(
@@ -31,6 +31,13 @@ init_date = pd.read_sql(
 
 last_date = pd.read_sql(
     "SELECT TG.created from TOP_GROSSING TG ORDER BY TG.created DESC LIMIT 1", sqlEngine)
+
+last_date_day = format(last_date['created'][0])
+
+top10Free_apps = pd.read_sql(
+    "SELECT  TF.position, A.title, A.url, A.icon FROM `TOP_FREE` TF INNER JOIN APPS A ON A.appId = TF.appId WHERE country = 'USA' AND TF.CREATED = %s ORDER BY POSITION LIMIT 10",
+    params=['2022-05-15'],
+    con=sqlEngine).to_dict(orient='records')
 
 dbConnection.close()
 

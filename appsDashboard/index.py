@@ -5,6 +5,7 @@ from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 from top_grossing import top_grossing_layout
 from home import home_layout
+from totalApps import apps_layout
 from listado_apks import obtain_layout
 from dash_iconify import DashIconify
 
@@ -20,7 +21,6 @@ link_tabs_layout = html.Div([
     ], className="index-tabs"
     )
 ])
-
 
 server = app.server
 
@@ -39,7 +39,7 @@ app.layout = html.Div([
                             ), width=1),
                             dbc.Col(html.H5("Google Play Scraping Dashboard"),
                                     className="top-title"),
-                            dbc.Col(link_tabs_layout, width=3),
+                            dbc.Col(link_tabs_layout, width=4),
                         ]
                     ), className="top-bar"
                 ),
@@ -52,7 +52,7 @@ app.layout = html.Div([
 
     dcc.Location(id='url', refresh=False),
 
-    html.Div(id='page-content')
+    html.Div(id='page-content', className="page-content")
 
 ])
 
@@ -69,6 +69,8 @@ def switch_tab(pathname):
         return top_grossing_layout
     elif pathname == '/obtain':
         return obtain_layout
+    elif pathname == '/apps':
+        return apps_layout
 
 
 if __name__ == '__main__':
