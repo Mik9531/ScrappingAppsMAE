@@ -1,78 +1,113 @@
 # coding=utf8
-
-
+import shutil
 import time
-from urllib.parse import quote_plus
-
 import os
 import pymysql
 import requests
-import scraper
 from bs4 import BeautifulSoup
 from flask import Flask, render_template
-# from pyaxmlparser import APK
 from androguard.core.bytecodes.apk import APK
-from androguard.core.bytecodes.dvm import DalvikVMFormat
-from androguard.core.analysis.analysis import Analysis
-from androguard.decompiler.dad.decompile import DvMethod
-from google_play_scraper import app
+from google_play_scraper import app, permissions, reviews
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support import expected_conditions as EC
+
+from pathlib import Path
+
+g_play_url = "https://play.google.com/store/apps/details?id="
 
 application = Flask(__name__)
 
-
-def search(query):
-    res = requests.get('https://apkpure.com/search?q={}&region='.format(quote_plus(query)), headers={
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) '
-                      'Version/9.1.2 Safari/601.7.5 '
-    }).text
-    soup = BeautifulSoup(res, "html.parser")
-    search_result = soup.find('div', {'id': 'search-res'}).find('dl', {'class': 'search-dl'})
-    if search_result is not None:
-        app_tag = search_result.find('p', {'class': 'search-title'}).find('a')
-        download_link = 'https://apkpure.com' + app_tag['href']
-        return download_link
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Safari/537.36'}
 
 
-def download(link):
-    res = requests.get(link + '/download?from=details', headers={
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) '
-                      'Version/9.1.2 Safari/601.7.5 '
-    }).text
-    soup = BeautifulSoup(res, "html.parser").find('a', {'id': 'download_link'})
-    if soup is not None:
-        if soup['href']:
-            r = requests.get(soup['href'], stream=True, headers={
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) '
-                              'Version/9.1.2 Safari/601.7.5 '
-            })
-            with open(link.split('/')[-1] + '.apk', 'wb') as file:
+def time_passed(start, duration):
+    """tests if an amount of time has passed
+    Args:
+        start(float): timestamp of time()
+        duration(int): seconds that need to pass
+    Returns:
+        bool: are 'duration' seconds over since 'start'
+    """
+    return start + duration <= time.time()
+
+
+def download_apk(actual_apk):
+    eliminateApk = False
+    notLink = True
+
+    # Obtenemos el nombre del paquete
+    package_id = actual_apk
+
+    # Verificamos que el paquete exista en el Play Store
+    g_play_res = requests.get(g_play_url + package_id,
+                              headers=headers, allow_redirects=True)
+    if g_play_res.status_code != 200:
+        notLink = False
+
+    # Buscamos el paquete en la Web
+    search_res = requests.get(
+        "https://apk.support/download-app-es/" + package_id,
+        headers=headers, allow_redirects=True)
+
+    # Verificamos que lo encuentra correctamente
+    if search_res.status_code != 200:
+        notLink = False
+
+    if notLink is True:
+
+        soup = BeautifulSoup(search_res.content, 'html.parser')
+
+        tbody_children = soup.findAll('a')
+
+        sub_dl_links = []
+
+        # Obtenemos el enlace de descarga de la aplicación
+        for item in tbody_children:
+            link = item.get('href')
+            if link is not None:
+                if link.find("playstoreapi.com") != -1:
+                    sub_dl_links.append(link)
+
+        if sub_dl_links is not None:
+            # download the apk
+            print('Downloading ' + package_id)
+
+            # TODO: replace app_name with actual app name
+            output_file = "APKS/" + package_id + ".apk"
+
+            r = requests.get(sub_dl_links[0], allow_redirects=True,
+                             stream=True)
+
+            with open(output_file, 'wb') as f:
+                dl = 0
+                start = time.time()
+
                 for chunk in r.iter_content(chunk_size=1024):
+                    # Esperamos máximo 60 segundos, para evitar descargas muy lentas
+                    if time_passed(start, 60):
+                        eliminateApk = True
+                        break
                     if chunk:
-                        file.write(chunk)
-    return link.split('/')[-1] + '.apk'
+                        dl += len(chunk)
+                        f.write(chunk)
+            print('Aplicación descargada')
 
-
-def download_apk(app_id):
-    download_link = search(app_id)
-
-    if download_link is not None:
-        print('Downloading {}.apk ...'.format(download_link))
-        id_download = download(download_link)
-        print('Download completed!')
-        return id_download
+            print('Aplicación almacenada')
+        else:
+            output_file = None
     else:
-        print('No results')
+        output_file = None
 
+    if eliminateApk is True:
+        os.remove(output_file)
+        output_file = None
 
-def obtain_list(collection, country):
-    result = []
-    cont_iter = 0
-
-    while bool(result) is False and cont_iter < 10:
-        result = scraper.list()
-        cont_iter += 1
-
-    return result
+    return output_file
 
 
 @application.route('/')
@@ -82,30 +117,21 @@ def index():
 
 @application.route('/listadoApks/')
 def my_link():
-    global result_list
     start_time = time.time()
-
     # Creamos la conexion a la base de datos
-
-    connection = pymysql.connect(host='localhost',
+    connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
-                                 db='testPy2',
+                                 db='appsData',
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
 
-    sql = "SELECT appId FROM APPS"
-
-    cursor.execute(sql)
-
-    list_already_apps = [item['appId'] for item in cursor.fetchall()]
-
-    sql = "SELECT appId FROM RELATEDS GROUP BY appId"
-
-    cursor.execute(sql)
-
-    list_already_relateds = [item['appId'] for item in cursor.fetchall()]
+    # sql = "SELECT appId FROM APPS"
+    #
+    # cursor.execute(sql)
+    #
+    # list_already_apps = [item['appId'] for item in cursor.fetchall()]
 
     sql = "SELECT appId FROM PERMISSIONS GROUP BY appId"
 
@@ -117,26 +143,12 @@ def my_link():
 
     cursor.execute(sql)
 
+    collections_list_name = []
+
     list_already_reviews = [item['appId'] for item in cursor.fetchall()]
 
-    collections_list = []
     check_permissions = []
     check_review_app = []
-
-    collections_list.append('TOP_FREE')
-    collections_list.append('TOP_FREE_GAMES')
-
-    collections_list.append('TOP_PAID')
-    collections_list.append('TOP_PAID_GAMES')
-
-    collections_list.append('GROSSING')
-    collections_list.append('TOP_GROSSING_GAMES')
-
-    collections_list.append('NEW_FREE')
-    collections_list.append('NEW_FREE_GAMES')
-
-    collections_list.append('NEW_PAID')
-    collections_list.append('NEW_PAID_GAMES')
 
     # Creamos la tabla de aplicaciones si no existe
     cursor.execute(
@@ -174,565 +186,585 @@ def my_link():
         "CREATE TABLE IF NOT EXISTS " + 'SCORES' + "(appId VARCHAR(255) PRIMARY KEY, "
                                                    "score float(255,2), created DATE)")
 
-    for collection in collections_list:
+    # Ocultamos la ventana que genera chrome con estas opciones
+    options = webdriver.ChromeOptions()
+    options.add_argument('--no-sandbox')
+    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
+    options.add_argument("--disable-setuid-sandbox")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--ignore-ssl-errors=yes')
+    options.add_argument('--ignore-certificate-errors')
 
-        print(collection)
+    countries = "AF,AX,AL,DZ,AS,AD,AO,AI,AQ,AG,AR,AM,AW,AU,AT,AZ,BH,BS,BD,BB,BY,BE,BZ,BJ,BM,BT,BO,BQ,BA,BW,BV,BR," \
+                "IO,BN,BG,BF,BI,KH,CM,CA,CV,KY,CF,TD,CL,CN,CX,CC,CO,KM,CG,CD,CK,CR,CI,HR,CU,CW,CY,CZ,DK,DJ,DM,DO," \
+                "EC,EG,SV,GQ,ER,EE,ET,FK,FO,FJ,FI,FR,GF,PF,TF,GA,GM,GE,DE,GH,GI,GR,GL,GD,GP,GU,GT,GG,GN,GW,GY,HT," \
+                "HM,VA,HN,HK,HU,IS,IN,ID,IR,IQ,IE,IM,IL,IT,JM,JP,JE,JO,KZ,KE,KI,KP,KR,KW,KG,LA,LV,LB,LS,LR,LY,LI," \
+                "LT,LU,MO,MK,MG,MW,MY,MV,ML,MT,MH,MQ,MR,MU,YT,MX,FM,MD,MC,MN,ME,MS,MA,MZ,MM,NA,NR,NP,NL,NC,NZ,NI," \
+                "NE,NG,NU,NF,MP,NO,OM,PK,PW,PS,PA,PG,PY,PE,PH,PN,PL,PT,PR,QA,RE,RO,RU,RW,BL,SH,KN,LC,MF,PM,VC,WS," \
+                "SM,ST,SA,SN,RS,SC,SL,SG,SX,SK,SI,SB,SO,ZA,GS,SS,ES,LK,SD,SR,SJ,SZ,SE,CH,SY,TW,TJ,TZ,TH,TL,TG,TK," \
+                "TO,TT,TN,TR,TM,TC,TV,UG,UA,AE,GB,US,UM,UY,UZ,VU,VE,VN,VG,VI,WF,EH,YE,ZM,ZW "
 
-        table_collection = collection
+    countries = countries.split(',')
 
-        # Creamos la tabla de la coleccion actual
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS " + table_collection + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
-                                                               "position INT, country VARCHAR(255), created DATE)")
+    # countries = 'BE,BE'
+    #
+    # countries = countries.split(',')
 
-        countries = "AF,AX,AL,DZ,AS,AD,AO,AI,AQ,AG,AR,AM,AW,AU,AT,AZ,BH,BS,BD,BB,BY,BE,BZ,BJ,BM,BT,BO,BQ,BA,BW,BV,BR," \
-                    "IO,BN,BG,BF,BI,KH,CM,CA,CV,KY,CF,TD,CL,CN,CX,CC,CO,KM,CG,CD,CK,CR,CI,HR,CU,CW,CY,CZ,DK,DJ,DM,DO," \
-                    "EC,EG,SV,GQ,ER,EE,ET,FK,FO,FJ,FI,FR,GF,PF,TF,GA,GM,GE,DE,GH,GI,GR,GL,GD,GP,GU,GT,GG,GN,GW,GY,HT," \
-                    "HM,VA,HN,HK,HU,IS,IN,ID,IR,IQ,IE,IM,IL,IT,JM,JP,JE,JO,KZ,KE,KI,KP,KR,KW,KG,LA,LV,LB,LS,LR,LY,LI," \
-                    "LT,LU,MO,MK,MG,MW,MY,MV,ML,MT,MH,MQ,MR,MU,YT,MX,FM,MD,MC,MN,ME,MS,MA,MZ,MM,NA,NR,NP,NL,NC,NZ,NI," \
-                    "NE,NG,NU,NF,MP,NO,OM,PK,PW,PS,PA,PG,PY,PE,PH,PN,PL,PT,PR,QA,RE,RO,RU,RW,BL,SH,KN,LC,MF,PM,VC,WS," \
-                    "SM,ST,SA,SN,RS,SC,SL,SG,SX,SK,SI,SB,SO,ZA,GS,SS,ES,LK,SD,SR,SJ,SZ,SE,CH,SY,TW,TJ,TZ,TH,TL,TG,TK," \
-                    "TO,TT,TN,TR,TM,TC,TV,UG,UA,AE,GB,US,UM,UY,UZ,VU,VE,VN,VG,VI,WF,EH,YE,ZM,ZW "
+    cont_countries = 0  # Marcara la posicion de la aplicacion en el listado
 
-        countries = countries.split(',')
+    not_actual_apps = []
 
-        # countries = 'AF,AF'
-        #
-        # countries = countries.split(',')
+    current_scraping_apps = []
 
-        cont_list = 0  # Marcara la posicion de la aplicacion en el listado
+    collections_list_name.append("")
+    collections_list_name.append("TOP_FREE")
+    collections_list_name.append("GROSSING")
+    collections_list_name.append("TOP_PAID")
 
-        app_details = scraper.app('com.nianticlabs.pokemongo')
+    for country in countries:
 
-        result = app(
-            'com.nianticlabs.pokemongo',
-            lang='en',  # defaults to 'en'
-            country='us'  # defaults to 'us'
-        )
+        driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        time.sleep(5)
 
-        for country in countries:
+        TOP_FREE = []
+        TOP_GROSSING = []
+        TOP_PAID = []
 
-            total_apps_collection = []
+        collections_list = []
 
-            total_apps = []
+        print(country)
 
-            total_scores = []
+        print(str(cont_countries) + "/" + str(len(countries)))
 
-            total_permissions = []
+        cont_countries += 1
 
-            total_reviews = []
+        not_button = True
 
-            cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
+        url = 'https://play.google.com/store/apps?gl=' + country + '&hl=es'
 
-            # Obtenemos los datos de la apliaciÃ³n
+        total_apps_collection = []
+
+        total_apps = []
+
+        not_list_apps = []
+
+        cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
+
+        # Obtenemos los datos de las aplicaciones gratuitas
+
+        driver.get(url)
+
+        button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+
+        try:
+            actual_button = button[6]
+        except Exception:
+            not_button = False
+
+        if not_button is True:
             try:
-                result_list = obtain_list(collection, country)
+                actual_button.click()
+                time.sleep(5)
+
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                if elems is not None:
+                    add_list = True
+
             except Exception:
-                var = None
+                add_list = False
+                button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+                actual_button.click()
+                time.sleep(5)
 
-            print(country)
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-            print(str(cont_list) + "/" + str(len(countries)))
+            if len(elems):
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                for elem in elems:
+                    href = elem.get_attribute('href')
+                    if "details?id" in href:
+                        app_id = href.split('id=')[1]
+                        if "Posicionamiento" in elem.accessible_name:
+                            TOP_FREE.append(app_id)
+                        else:
+                            if app_id not in not_list_apps:
+                                not_list_apps.append(app_id)
 
-            cont_list += 1
+            print("Obtenidos TOP_FREE")
+            collections_list_name.append("")
+            collections_list.append(not_list_apps)
 
-            cont_position_actual = 1
+            collections_list_name.append("TOP_FREE")
+            collections_list.append(TOP_FREE)
 
-            for actual_app in result_list:
+        # driver.get(url)
+        # time.sleep(7)
 
-                # AÃ±adimos a datos de la coleccion actual
+        not_button = True
 
-                collection_apps = (actual_app['appId'], cont_position, country)
-                cont_position += 1
+        button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
 
-                total_apps_collection.append(collection_apps)
+        try:
+            actual_button = button[7]
+        except Exception:
+            not_button = False
 
-                print(str(cont_position_actual) + "/" + str(len(result_list)))
-
-                cont_position_actual += 1
-
-                # Controlamos que exista la aplicacion en relacionados para optimizar tiempos
-
-                # if actual_app['appId'] not in list_already_relateds:
-                #
-                #     app_details = []
-                #
-                #     checkRelateds = False
-                #
-                #     if actual_app['appId'] not in check_apps:
-                #         check_apps.append(actual_app['appId'])
-                #         checkRelateds = True
-                #
-                #     if checkRelateds:
-                #         total_relateds = []
-                #         total_apps = []
-                #         total_apps_related = []
-                #         cont_iter = 0
-                #         similars = []
-                #
-                #         # Obtenemos las aplicaciones similares a la aplicacion actual
-                #         while bool(similars) is False and cont_iter < 5:
-                #             try:
-                #                 similars = scraper.similar(actual_app['appId'], lang='es', fullDetail=False)
-                #                 cont_iter += 1
-                #             except Exception:
-                #                 similars = []
-                #                 cont_iter += 1
-                #
-                #         if len(similars):
-                #
-                #             total_permissions = []
-                #             total_reviews = []
-                #
-                #             for actual_similar in similars:
-                #
-                #                 check_actual_related = False
-                #                 if actual_similar['appId'] not in check_apps:
-                #                     check_apps.append(actual_similar['appId'])
-                #                     check_actual_related = True
-                #
-                #                 if check_actual_related:
-                #                     data_relateds = (actual_app['appId'],
-                #                                      actual_similar['appId']
-                #                                      )
-                #                     total_relateds.append(data_relateds)
-                #
-                #                     app_details = []
-                #                     cont_iter = 0
-                #
-                #                     while bool(app_details) is False and cont_iter < 10:
-                #                         try:
-                #                             app_details = scraper.app(appId=actual_similar['appId'], lang='es')
-                #                             cont_iter += 1
-                #                         except Exception:
-                #                             app_details = []
-                #                             cont_iter += 1
-                #
-                #                     if len(app_details):
-                #                         description = app_details.get('description')
-                #                         ratings = app_details.get('ratings')
-                #                         reviews = app_details.get('reviews')
-                #                         recentChanges = app_details.get('recentChanges')
-                #                         installs = app_details.get('installs')
-                #                         maxInstalls = app_details.get('maxInstalls')
-                #                         androidVersionText = app_details.get('androidVersionText')
-                #                         genre = app_details.get('genre')
-                #                         genreId = app_details.get('genreId')
-                #                         adSupported = app_details.get('adSupported')
-                #                         editorsChoice = app_details.get('editorsChoice')
-                #                         contentRating = app_details.get('contentRating')
-                #
-                #                     # Guardamos la aplicacion
-                #                     score = actual_similar.get('score')
-                #                     summary = actual_similar.get('summary')
-                #
-                #                     if score is not None:
-                #                         score = round(score, 2)
-                #
-                #                     apps = (actual_similar['appId'],
-                #                             actual_similar['title'],
-                #                             score,
-                #                             summary,
-                #                             actual_similar['price'],
-                #                             actual_similar['free'],
-                #                             actual_similar['developer'],
-                #                             actual_similar['url'],
-                #                             actual_similar['icon'],
-                #                             description, installs, maxInstalls, ratings,
-                #                             reviews, androidVersionText, genre,
-                #                             genreId,
-                #                             adSupported, recentChanges, released,
-                #                             editorsChoice,
-                #                             contentRating
-                #                             )
-                #
-                #                     total_apps_related.append(apps)
-                #
-                #                     # Guardamos la puntuacion de la aplicacion actual
-                #                     score_get = actual_similar.get('score')
-                #                     if score_get is not None:
-                #                         score = round(actual_similar['score'], 2)
-                #                         data_scores = (actual_similar['appId'],
-                #                                        score
-                #                                        )
-                #                         total_scores.append(data_scores)
-                #
-                #                     # Obtenemos los permisos de la aplicacion actual
-                #
-                #                     if actual_similar['appId'] not in list_already_permissions:
-                #
-                #                         check_permission_app = False
-                #
-                #                         if actual_similar['appId'] not in check_permissions:
-                #                             check_permissions.append(actual_similar['appId'])
-                #                             check_permission_app = True
-                #
-                #                         if check_permission_app:
-                #
-                #                             permissions = scraper.permissions(actual_similar['appId'], lang='en',
-                #                                                               short=True)
-                #
-                #                             if permissions is not None:
-                #                                 sms_permission = 'SMS' in permissions
-                #                                 storage_permission = 'Storage' in permissions
-                #                                 camera_permission = 'Camera' in permissions
-                #                                 device_permission = 'Device & app history' in permissions
-                #                                 microphone_permission = 'Microphone' in permissions
-                #                                 calendar_permission = 'Calendar' in permissions
-                #                                 phone_permission = 'Phone' in permissions
-                #                                 device_id_permission = 'Device ID & call information' in permissions
-                #                                 identity_permission = 'Identity' in permissions
-                #                                 media_permission = 'Photos/Media/Files' in permissions
-                #                                 contacts_permission = 'Contacts' in permissions
-                #                                 wifi_permission = 'Wi-Fi connection information' in permissions
-                #                                 location_permission = 'Location' in permissions
-                #
-                #                                 data_permissions = (actual_similar['appId'],
-                #                                                     sms_permission,
-                #                                                     storage_permission,
-                #                                                     camera_permission,
-                #                                                     device_permission,
-                #                                                     microphone_permission,
-                #                                                     calendar_permission,
-                #                                                     phone_permission,
-                #                                                     device_id_permission,
-                #                                                     identity_permission,
-                #                                                     media_permission,
-                #                                                     contacts_permission,
-                #                                                     wifi_permission,
-                #                                                     location_permission
-                #                                                     )
-                #                                 total_permissions.append(data_permissions)
-                #
-                #                     # Obtenemos los 10 comentarios mas utiles de la aplicacion
-                #
-                #                     if actual_similar['appId'] not in list_already_reviews:
-                #
-                #                         check_review = False
-                #
-                #                         if actual_similar['appId'] not in check_review_app:
-                #                             check_review_app.append(actual_similar['appId'])
-                #                             check_review = True
-                #
-                #                         if check_review:
-                #
-                #                             reviews = scraper.reviews(actual_similar['appId'], lang='es',
-                #                                                       country='es',
-                #                                                       num=10, sort=scraper.sort['HELPFULNESS'])
-                #
-                #                             if reviews['data'] is not None:
-                #
-                #                                 for review in reviews['data']:
-                #                                     data_reviews = (review['id'],
-                #                                                     actual_similar['appId'],
-                #                                                     review['userName'],
-                #                                                     review['date'],
-                #                                                     review['score'],
-                #                                                     review['text'],
-                #                                                     )
-                #                                     total_reviews.append(data_reviews)
-                #
-                #             sql = "INSERT INTO RELATEDS(appId," \
-                #                   "relatedApp) VALUES (%s,%s)"
-                #
-                #             val = total_relateds
-                #             cursor.executemany(sql, val)
-                #             connection.commit()
-                #             print(cursor.rowcount, "relacionados insertados.")
-                #
-                #             sql = "INSERT INTO APPS (appId," \
-                #                   "title," \
-                #                   "score," \
-                #                   "summary," \
-                #                   "price," \
-                #                   "free," \
-                #                   "developer," \
-                #                   "url," \
-                #                   "icon," \
-                #                   "description,installs, maxInstalls, ratings, reviews, androidVersionText, genre, genreId, adSupported, recentChanges, released, editorsChoice, contentRating, " \
-                #                   "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON " \
-                #                   "DUPLICATE KEY UPDATE updated = NOW()," \
-                #                   "title=VALUES(title), " \
-                #                   "score=VALUES(score), " \
-                #                   "summary=VALUES(summary), " \
-                #                   "price=VALUES(price), " \
-                #                   "free=VALUES(free), " \
-                #                   "url=VALUES(url), icon=VALUES(icon), description=VALUES(description), installs=VALUES(installs), maxInstalls=VALUES(maxInstalls), ratings=VALUES(ratings)," \
-                #                   "reviews=VALUES(reviews), androidVersionText=VALUES(androidVersionText), genre=VALUES(genre), genreId=VALUES(genreId),adSupported=VALUES(adSupported),recentChanges=VALUES(recentChanges)," \
-                #                   "released=VALUES(released), editorsChoice=VALUES(editorsChoice), contentRating=VALUES(contentRating) "
-                #
-                #         val = total_apps_related
-                #         cursor.executemany(sql, val)
-                #         connection.commit()
-                #         print(cursor.rowcount, "aplicaciones relacionadas insertadas.")
-                #
-                #         sql = "INSERT INTO SCORES (appId," \
-                #               "score, created) VALUES (%s,%s,NOW()) ON " \
-                #               "DUPLICATE KEY UPDATE created = NOW()"
-                #
-                #         val = total_scores
-                #         cursor.executemany(sql, val)
-                #         connection.commit()
-                #         print(cursor.rowcount, "puntuaciones relacionadas insertada")
-                #
-                #         if len(total_permissions):
-                #             sql = "INSERT INTO PERMISSIONS(appId," \
-                #                   "Location, Calendar, Microphone, Contacts, DeviceHistory, Camera, Storage, WiFi, " \
-                #                   "PhotosMediaFiles, Phone, DeviceID, SMS, Identity ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s," \
-                #                   "%s,%s,%s,%s) ON DUPLICATE KEY UPDATE appId = VALUES(appId)"
-                #
-                #             val = total_permissions
-                #             cursor.executemany(sql, val)
-                #             connection.commit()
-                #             print(cursor.rowcount, "permisos relacionados insertados.")
-                #
-                #         if len(total_reviews):
-                #             sql = "INSERT INTO REVIEWS(id," \
-                #                   "appId," \
-                #                   "userName," \
-                #                   "date," \
-                #                   "score," \
-                #                   "text) VALUES (%s,%s,%s,%s,%s,%s)"
-                #
-                #             val = total_reviews
-                #             cursor.executemany(sql, val)
-                #             connection.commit()
-                #             print(cursor.rowcount, "comentarios relacionados insertados.")
-
-                apk = APK('com.adopteunmec.androides.apk')
-                test = APK.get_libraries(apk)
-                test2 = APK.get_receivers(apk)
-                test3 = APK.get_activities(apk)
-                test4 = APK.get_android_resources(apk)
-                test5 = APK.get_dex(apk)
-                test6 = APK.get_features(apk)
-                test7 = APK.get_providers(apk)
-                test8 = APK.get_files(apk)
-
-                test = 1
-                #
-                #
-                # # Descarga de APK
-                # id_download = download_apk('com.adopteunmec.androides')
-                # # id_download = None
-                # if id_download is not None:
-                #     if os.path.exists(id_download):
-                #         apk = APK(id_download)
-                #         test = APK.get_libraries(apk)
-                #         package_name = apk.packagename
-                #         del apk
-                #         os.remove(id_download)
-                # else:
-                #     package_name = None
-
-                # Obtenemos los detalles adicionales de la aplicaciÃ³n si no se encuentra ya en nuestro listado
-
-                if actual_app['appId'] not in list_already_apps:
-
-                    app_details = []
-                    cont_iter = 0
-
-                    while bool(app_details) is False and cont_iter < 10:
-                        try:
-                            app_details = scraper.app(appId=actual_app['appId'], lang='es')
-                            cont_iter += 1
-                        except Exception:
-                            app_details = []
-                            cont_iter += 1
-
-                    score = actual_app.get('score')
-                    summary = actual_app.get('summary')
-
-                    if len(app_details):
-                        description = app_details.get('description')
-                        ratings = app_details.get('ratings')
-                        reviews = app_details.get('reviews')
-                        recentChanges = app_details.get('recentChanges')
-                        installs = app_details.get('installs')
-                        maxInstalls = app_details.get('maxInstalls')
-                        androidVersionText = app_details.get('androidVersionText')
-                        genre = app_details.get('genre')
-                        genreId = app_details.get('genreId')
-                        adSupported = app_details.get('adSupported')
-                        editorsChoice = app_details.get('editorsChoice')
-                        contentRating = app_details.get('contentRating')
-                        released = app_details.get('released')
-
-                    if score is not None:
-                        score = round(score, 2)
-
-                    apps = (actual_app['appId'],
-                            actual_app['title'],
-                            score,
-                            summary,
-                            actual_app['price'],
-                            actual_app['free'],
-                            actual_app['developer'],
-                            actual_app['url'],
-                            actual_app['icon'], description, installs, maxInstalls, ratings,
-                            reviews, androidVersionText, genre,
-                            genreId,
-                            adSupported, recentChanges, released,
-                            editorsChoice,
-                            contentRating
-                            )
-
-                    total_apps.append(apps)
-
-                    # Guardamos la puntuacion de la aplicacion actual
-                    # if score is not None:
-                    #     score = round(actual_app['score'], 2)
-                    #     data_scores = (actual_app['appId'],
-                    #                    score
-                    #                    )
-                    #     total_scores.append(data_scores)
-
-                    # Obtenemos los permisos de la aplicacion actual si no se encuentra ya en permisos
-
-                    if actual_app['appId'] not in list_already_permissions:
-
-                        check_permission_app = False
-
-                        if actual_app['appId'] not in check_permissions:
-                            check_permissions.append(actual_app['appId'])
-                            check_permission_app = True
-
-                        if check_permission_app:
-
-                            permissions = scraper.permissions(actual_app['appId'], lang='en', short=True)
-
-                            if permissions is not None:
-                                sms_permission = 'SMS' in permissions
-                                storage_permission = 'Storage' in permissions
-                                camera_permission = 'Camera' in permissions
-                                device_permission = 'Device & app history' in permissions
-                                microphone_permission = 'Microphone' in permissions
-                                calendar_permission = 'Calendar' in permissions
-                                phone_permission = 'Phone' in permissions
-                                device_id_permission = 'Device ID & call information' in permissions
-                                identity_permission = 'Identity' in permissions
-                                media_permission = 'Photos/Media/Files' in permissions
-                                contacts_permission = 'Contacts' in permissions
-                                wifi_permission = 'Wi-Fi connection information' in permissions
-                                location_permission = 'Location' in permissions
-
-                                data_permissions = (actual_app['appId'],
-                                                    sms_permission,
-                                                    storage_permission,
-                                                    camera_permission,
-                                                    device_permission,
-                                                    microphone_permission,
-                                                    calendar_permission,
-                                                    phone_permission,
-                                                    device_id_permission,
-                                                    identity_permission,
-                                                    media_permission,
-                                                    contacts_permission,
-                                                    wifi_permission,
-                                                    location_permission
-                                                    )
-                                total_permissions.append(data_permissions)
-
-                    # Obtenemos los 10 comentarios mas utiles de la aplicacion si no se encuentra ya en comentarios
-
-                    if actual_app['appId'] not in list_already_reviews:
-
-                        check_review = False
-
-                        if actual_app['appId'] not in check_review_app:
-                            check_review_app.append(actual_app['appId'])
-                            check_review = True
-
-                        if check_review:
-
-                            reviews = scraper.reviews(actual_app['appId'], lang='es', country='es',
-                                                      num=10, sort=scraper.sort['HELPFULNESS'])
-
-                            if reviews['data'] is not None:
-
-                                for review in reviews['data']:
-                                    data_reviews = (review['id'],
-                                                    actual_app['appId'],
-                                                    review['userName'],
-                                                    review['date'],
-                                                    review['score'],
-                                                    review['text'],
-                                                    )
-                                    total_reviews.append(data_reviews)
-
-            # Insertarmos las aplicaciones
+        if not_button is True:
             try:
-                sql = "INSERT INTO APPS (appId," \
-                      "title," \
-                      "score," \
-                      "summary," \
-                      "price," \
-                      "free," \
-                      "developer," \
-                      "url," \
-                      "icon," \
-                      "description,installs, maxInstalls, ratings, reviews, androidVersionText, genre, genreId, adSupported, recentChanges, released, editorsChoice, contentRating," \
-                      "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON " \
-                      "DUPLICATE KEY UPDATE updated = NOW()," \
-                      "title=VALUES(title), " \
-                      "score=VALUES(score), " \
-                      "summary=VALUES(summary), " \
-                      "price=VALUES(price), " \
-                      "free=VALUES(free), " \
-                      "url=VALUES(url), icon=VALUES(icon) , description=VALUES(description), installs=VALUES(installs), maxInstalls=VALUES(maxInstalls), ratings=VALUES(ratings)," \
-                      "reviews=VALUES(reviews), androidVersionText=VALUES(androidVersionText), genre=VALUES(genre), genreId=VALUES(genreId),adSupported=VALUES(adSupported),recentChanges=VALUES(recentChanges)," \
-                      "released=VALUES(released), editorsChoice=VALUES(editorsChoice), contentRating=VALUES(contentRating) "
+                actual_button.click()
+                time.sleep(5)
 
-                val = total_apps
-                cursor.executemany(sql, val)
-                connection.commit()
-                print(cursor.rowcount, "aplicaciones insertadas.")
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                if elems is not None:
+                    add_list = True
+            except Exception:
+                add_list = False
+                button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+                actual_button.click()
+                time.sleep(5)
 
-                # Insertamos las puntuaciones
-                # sql = "INSERT INTO SCORES (appId," \
-                #       "score, created) VALUES (%s,%s,NOW()) ON " \
-                #       "DUPLICATE KEY UPDATE created = NOW()"
-                #
-                # val = total_scores
-                # cursor.executemany(sql, val)
-                # connection.commit()
-                # print(cursor.rowcount, "puntuacion insertada")
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-                # Insertamos los permisos
-                if len(total_permissions):
-                    sql = "INSERT INTO PERMISSIONS(appId," \
-                          "Location, Calendar, Microphone, Contacts, DeviceHistory, Camera, Storage, WiFi, " \
-                          "PhotosMediaFiles, Phone, DeviceID, SMS, Identity ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s," \
-                          "%s,%s,%s,%s) ON DUPLICATE KEY UPDATE appId = VALUES(appId)"
+            if len(elems):
+                for elem in elems:
+                    href = elem.get_attribute('href')
+                    if "details?id" in href:
+                        app_id = href.split('id=')[1]
+                        if "Posicionamiento" in elem.accessible_name:
+                            TOP_GROSSING.append(app_id)
 
-                    val = total_permissions
-                    cursor.executemany(sql, val)
-                    connection.commit()
-                    print(cursor.rowcount, "permisos insertados.")
+            print("Obtenidos GROSSING")
+            collections_list.append(TOP_GROSSING)
+            collections_list_name.append("GROSSING")
 
-                # Insertamos los comentarios
-                if len(total_reviews):
-                    sql = "INSERT INTO REVIEWS(id," \
-                          "appId," \
-                          "userName," \
-                          "date," \
+        # Obtenemos los datos de las aplicaciones top ventas
+
+        # driver.get(url)
+        # time.sleep(10)
+
+        actual_button = True
+
+        button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+
+        try:
+            actual_button = button[8]
+        except Exception:
+            not_button = False
+
+        if not_button is True:
+            try:
+                button[8].click()
+                time.sleep(5)
+
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                if elems is not None:
+                    add_list = True
+
+            except Exception:
+                add_list = False
+                button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+                button[8].click()
+                time.sleep(5)
+
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+
+            if len(elems):
+                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                for elem in elems:
+                    href = elem.get_attribute('href')
+                    if "details?id" in href:
+                        app_id = href.split('id=')[1]
+                        if "Posicionamiento" in elem.accessible_name:
+                            TOP_PAID.append(app_id)
+
+            print("Obtenidos TOP_PAID")
+            collections_list.append(TOP_PAID)
+
+        driver.close()
+        driver.quit()
+
+        total_apps_collection = []
+
+        cont_list = 0
+
+        for collection in collections_list:
+
+            if len(collection):
+
+                cont_list += 1
+
+                total_apps = []
+                total_apps_collection = []
+
+                total_permissions = []
+                total_reviews = []
+
+                if (cont_list != 1 and len(total_apps_collection)):
+                    table_collection = collection
+
+                    # # Creamos la tabla de la coleccion actual
+                    # cursor.execute(
+                    #     "CREATE TABLE IF NOT EXISTS " + collections_list_name[
+                    #         cont_list] + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
+                    #                      "position INT, country VARCHAR(255), created DATE)")
+
+                else:
+                    not_actual_apps.append(collection)
+
+                cont_position_actual = 1
+
+                cont_position = 1
+
+                for actual_app in collection:
+
+                    # AÃ±adimos a datos de la coleccion actual
+
+                    collection_apps = (actual_app, cont_position, country)
+
+                    total_apps_collection.append(collection_apps)
+
+                    print(str(cont_position) + "/" + str(len(collection)))
+
+                    cont_position += 1
+
+                    # Obtenemos los detalles adicionales de la aplicacion si no se encuentra ya en nuestro listado
+
+                    if actual_app not in current_scraping_apps:
+
+                        current_scraping_apps.append(actual_app)
+                        app_details = []
+                        cont_iter = 0
+
+                        while bool(app_details) is False and cont_iter < 10:
+                            try:
+                                app_details = app(app_id=actual_app, lang='es')
+                                cont_iter += 1
+                            except Exception:
+                                app_details = []
+                                cont_iter += 1
+
+                        if len(app_details):
+                            score = app_details.get('score')
+                            summary = app_details.get('summary')
+                            description = app_details.get('description')
+                            ratings = app_details.get('ratings')
+                            reviews_num = app_details.get('reviews')
+                            recentChanges = app_details.get('recentChanges')
+                            installs = app_details.get('installs')
+                            androidVersionText = app_details.get('version')
+                            genre = app_details.get('genre')
+                            genreId = app_details.get('genreId')
+                            adSupported = app_details.get('adSupported')
+                            contentRating = app_details.get('contentRating')
+                            released = app_details.get('released')
+
+                            if score is not None:
+                                score = round(score, 2)
+
+                            # Descargamos la APK si no existe datos de lenguaje de programación en la tabla
+
+                            package_name = None
+
+                            app_details['programmingLanguage'] = ""
+
+                            app_details['libraries'] = ""
+
+                            if (app_details['free'] is True):
+
+                                sql = "SELECT programmingLanguage,libraries FROM APPS WHERE appId = %s"
+
+                                val = actual_app
+
+                                cursor.execute(sql, val)
+
+                                language_exists = cursor.fetchone()
+                                try:
+                                    if language_exists['programmingLanguage'] is None:
+
+                                        id_download = download_apk(actual_app)
+                                        # id_download = None
+                                        if id_download is not None:
+                                            if os.path.exists(id_download):
+
+                                                files_apk = []
+                                                remove_files = []
+
+                                                # Obtenemos el lenguaje de programacion usado
+                                                apk = APK(id_download)
+                                                files_apk = APK.get_files(apk)
+
+                                                # Si el archivo es un XAPK, extraemos para obtener sus datos y posteriormente eliminarlos
+                                                if (files_apk[0] == (actual_app + ".apk")):
+                                                    remove_files = files_apk
+                                                    remove_files.pop(0)
+                                                    print("extrayendo apk")
+                                                    p = Path(id_download)
+                                                    p.rename(p.with_suffix('.zip'))
+                                                    shutil.unpack_archive("APKS/" + actual_app + '.zip',
+                                                                          extract_dir="APKS")
+                                                    apk = APK(id_download)
+                                                    files_apk = APK.get_files(apk)
+                                                    os.remove("APKS/" + actual_app + '.zip')
+
+                                                    for actual_file in remove_files:
+                                                        os.remove("APKS/" + actual_file)
+
+                                                # Obtenemos el lenguaje de programacion usado
+
+                                                if (any("flutter" in string for string in files_apk)):
+                                                    app_details['programmingLanguage'] = 'Flutter'
+                                                elif any("kotlin" in string for string in files_apk):
+                                                    app_details['programmingLanguage'] = 'Kotlin'
+                                                else:
+                                                    app_details['programmingLanguage'] = 'Java'
+
+                                                if (len(files_apk) == 0):
+                                                    app_details['programmingLanguage'] = ''
+
+                                                # Obtenemos las librerías externas usadas
+                                                libraries = []
+                                                if (any("okhttp3" in string for string in files_apk)):
+                                                    libraries.append('okhttp3')
+
+                                                if (any("picasso" in string for string in files_apk)):
+                                                    libraries.append('picasso')
+
+                                                if (any("jackson" in string for string in files_apk)):
+                                                    libraries.append('jackson')
+
+                                                if (any("okio" in string for string in files_apk)):
+                                                    libraries.append('okio')
+
+                                                if (any("webrtc" in string for string in files_apk)):
+                                                    libraries.append('webrtc')
+
+                                                if (any("exoplayer" in string for string in files_apk)):
+                                                    libraries.append('exoplayer')
+
+                                                if (any("firebase" in string for string in files_apk)):
+                                                    libraries.append('firebase')
+
+                                                if (any("dagger" in string for string in files_apk)):
+                                                    libraries.append('dagger')
+
+                                                if (any("chromium" in string for string in files_apk)):
+                                                    libraries.append('chromium')
+
+                                                if (any("spongycastle" in string for string in files_apk)):
+                                                    libraries.append('spongycastle')
+
+                                                if (any("facebook" in string for string in files_apk)):
+                                                    libraries.append('facebook')
+
+                                                if (any("bolts" in string for string in files_apk)):
+                                                    libraries.append('bolts')
+
+                                                if (any("appsflyer" in string for string in files_apk)):
+                                                    libraries.append('appsflyer')
+
+                                                if (any("Gson" in string for string in files_apk)):
+                                                    libraries.append('Gson')
+
+                                                if (any("jsoup" in string for string in files_apk)):
+                                                    libraries.append('jsoup')
+
+                                                if (any("retrofit" in string for string in files_apk)):
+                                                    libraries.append('retrofit')
+
+                                                if (any("glide" in string for string in files_apk)):
+                                                    libraries.append('glide')
+
+                                                if (any("tensorflow" in string for string in files_apk)):
+                                                    libraries.append('tensorflow')
+
+                                                app_details['libraries'] = '|'.join(libraries)
+
+                                                # os.remove(id_download.rsplit('.', 1)[0])
+
+                                                try:
+                                                    os.remove(id_download)
+                                                    del id_download
+                                                except Exception as e:
+                                                    print(e)
+                                        else:
+                                            app_details['programmingLanguage'] = language_exists['programmingLanguage']
+                                            app_details['libraries'] = language_exists['libraries']
+                                except Exception as e:
+                                    print(e)
+
+                            if "appinventor" in actual_app:
+                                app_details['programmingLanguage'] = 'appInventor'
+
+                            apps = (app_details['appId'],
+                                    app_details['title'],
+                                    score,
+                                    summary,
+                                    app_details['price'],
+                                    app_details['free'],
+                                    app_details['developer'],
+                                    app_details['url'],
+                                    app_details['icon'], description, installs, ratings,
+                                    reviews_num, androidVersionText, genre,
+                                    genreId,
+                                    adSupported, recentChanges, released,
+                                    contentRating, app_details['programmingLanguage'], app_details['libraries']
+                                    )
+
+                            total_apps.append(apps)
+
+                            # Obtenemos los permisos de la aplicacion actual si no se encuentra ya en permisos
+
+                            check_permission_app = False
+
+                            if app_details['appId'] not in check_permissions:
+                                check_permissions.append(app_details['appId'])
+                                check_permission_app = True
+
+                            if check_permission_app:
+
+                                try:
+                                    permissions_data = permissions(app_details['appId'], lang='en')
+                                except Exception:
+                                    permissions_data = None
+
+                                if permissions_data is not None:
+                                    sms_permission = 'SMS' in permissions_data
+                                    storage_permission = 'Storage' in permissions_data
+                                    camera_permission = 'Camera' in permissions_data
+                                    device_permission = 'Device & app history' in permissions_data
+                                    microphone_permission = 'Microphone' in permissions_data
+                                    calendar_permission = 'Calendar' in permissions_data
+                                    phone_permission = 'Phone' in permissions_data
+                                    device_id_permission = 'Device ID & call information' in permissions_data
+                                    identity_permission = 'Identity' in permissions_data
+                                    media_permission = 'Photos/Media/Files' in permissions_data
+                                    contacts_permission = 'Contacts' in permissions_data
+                                    wifi_permission = 'Wi-Fi connection information' in permissions_data
+                                    location_permission = 'Location' in permissions_data
+
+                                    data_permissions = (app_details['appId'],
+                                                        sms_permission,
+                                                        storage_permission,
+                                                        camera_permission,
+                                                        device_permission,
+                                                        microphone_permission,
+                                                        calendar_permission,
+                                                        phone_permission,
+                                                        device_id_permission,
+                                                        identity_permission,
+                                                        media_permission,
+                                                        contacts_permission,
+                                                        wifi_permission,
+                                                        location_permission
+                                                        )
+                                    total_permissions.append(data_permissions)
+
+                            # Obtenemos los 10 comentarios mas utiles de la aplicacion si no se encuentra ya en comentarios
+
+                            if app_details['appId'] not in list_already_reviews:
+
+                                check_review = False
+
+                                if app_details['appId'] not in check_review_app:
+                                    check_review_app.append(app_details['appId'])
+                                    check_review = True
+
+                                if check_review:
+
+                                    try:
+                                        reviews_data = reviews(app_details['appId'], lang='es', country='es',
+                                                               count=10)
+                                    except Exception:
+                                        reviews_data = []
+                                        reviews_data[0] = None
+
+                                    if reviews_data[0] is not None:
+
+                                        for review in reviews_data[0]:
+                                            data_reviews = (review['reviewId'],
+                                                            app_details['appId'],
+                                                            review['userName'],
+                                                            review['at'],
+                                                            review['score'],
+                                                            review['content'],
+                                                            )
+                                            total_reviews.append(data_reviews)
+
+                # Insertarmos las aplicaciones
+                try:
+                    sql = "INSERT INTO APPS (appId," \
+                          "title," \
                           "score," \
-                          "text) VALUES (%s,%s,%s,%s,%s,%s)"
+                          "summary," \
+                          "price," \
+                          "free," \
+                          "developer," \
+                          "url," \
+                          "icon," \
+                          "description,installs, ratings, reviews, androidVersionText, genre, genreId, adSupported, recentChanges, released, contentRating,programmingLanguage, libraries," \
+                          "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON " \
+                          "DUPLICATE KEY UPDATE updated = NOW()," \
+                          "title=VALUES(title), " \
+                          "score=VALUES(score), " \
+                          "summary=VALUES(summary), " \
+                          "price=VALUES(price), " \
+                          "free=VALUES(free), " \
+                          "url=VALUES(url), icon=VALUES(icon) , description=VALUES(description), installs=VALUES(installs), ratings=VALUES(ratings)," \
+                          "reviews=VALUES(reviews), androidVersionText=VALUES(androidVersionText), genre=VALUES(genre), genreId=VALUES(genreId),adSupported=VALUES(adSupported),recentChanges=VALUES(recentChanges)," \
+                          "released=VALUES(released), contentRating=VALUES(contentRating), programmingLanguage=VALUES(programmingLanguage), libraries=VALUES(libraries)"
 
-                    val = total_reviews
+                    val = total_apps
                     cursor.executemany(sql, val)
                     connection.commit()
-                    print(cursor.rowcount, "comentarios insertados.")
+                    print(cursor.rowcount, "aplicaciones insertadas.")
 
-                # Guardamos las aplicaciones en la tabla correcta de la coleccion
+                    # Insertamos los permisos
+                    if len(total_permissions):
+                        sql = "INSERT INTO PERMISSIONS(appId," \
+                              "SMS, Storage, Camera, DeviceHistory, Microphone, Calendar, Phone, DeviceID, " \
+                              "Identity, PhotosMediaFiles, Contacts, WiFi, Location ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s," \
+                              "%s,%s,%s,%s) ON DUPLICATE KEY UPDATE appId = VALUES(appId), SMS = VALUES(SMS), Storage = " \
+                              "VALUES(Storage), Camera = VALUES(Camera), DeviceHistory = VALUES(DeviceHistory), " \
+                              "Microphone = VALUES(Microphone), Calendar = VALUES(Calendar), Phone = VALUES(Phone), " \
+                              "DeviceID = VALUES(DeviceID), Identity = VALUES(Identity), PhotosMediaFiles = VALUES(PhotosMediaFiles), Contacts = VALUES(Contacts), WiFi = VALUES(WiFi), Location = VALUES(Location) "
 
-                sql = "INSERT INTO " + table_collection + "(appId, position,country,created) VALUES (%s,%s,%s,CURDATE())"
-                val = total_apps_collection
-                cursor.executemany(sql, val)
-                connection.commit()
-                print(cursor.rowcount, "aplicaciones del listado insertadas.")
-            except Exception:
-                var = None
+                        val = total_permissions
+                        cursor.executemany(sql, val)
+                        connection.commit()
+                        print(cursor.rowcount, "permisos insertados.")
+
+                    # Insertamos los comentarios
+                    if len(total_reviews):
+                        sql = "INSERT INTO REVIEWS(id," \
+                              "appId," \
+                              "userName," \
+                              "date," \
+                              "score," \
+                              "text) VALUES (%s,%s,%s,%s,%s,%s)"
+
+                        val = total_reviews
+                        cursor.executemany(sql, val)
+                        connection.commit()
+                        print(cursor.rowcount, "comentarios insertados.")
+
+                    # Guardamos las aplicaciones en la tabla correcta de la coleccion
+
+                    if (cont_list != 1 and len(total_apps_collection)):
+                        sql = "INSERT INTO " + collections_list_name[
+                            cont_list - 1] + "(appId, position,country,created) VALUES (%s,%s,%s,CURDATE())"
+                        val = total_apps_collection
+                        cursor.executemany(sql, val)
+                        connection.commit()
+                        print(cursor.rowcount, "aplicaciones del listado insertadas.")
+                        total_apps_collection = []
+                        cont_position = 0
+                except Exception as e:
+                    print(e)
 
     connection.close()
 

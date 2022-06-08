@@ -8,4 +8,5 @@ services:
     volumes:
       - .:/server
     restart: always
+    shm_size: 2g
 
