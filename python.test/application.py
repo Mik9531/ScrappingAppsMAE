@@ -138,6 +138,7 @@ def my_link():
 
     list_already_reviews = [item['appId'] for item in cursor.fetchall()]
 
+
     check_permissions = []
     check_review_app = []
 
