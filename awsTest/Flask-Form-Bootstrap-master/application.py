@@ -1,21 +1,83 @@
-from flask import Flask, request, render_template, url_for, session, redirect
-from flask_restful import Resource, Api
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, RadioField, TextAreaField
-from wtforms.fields import EmailField
-from wtforms.validators import InputRequired
-
-application = app = Flask(__name__)
-
-import scraper
-
-import pymysql
-
-from bs4 import BeautifulSoup
+# coding=utf8
+import glob
+import shutil
+import time
+from multiprocessing import freeze_support
 from urllib.parse import quote_plus
-import requests
 
-from pyaxmlparser import APK
+import os
+import pymysql
+import requests
+import scraper
+from bs4 import BeautifulSoup
+from flask import Flask, render_template
+# from pyaxmlparser import APK
+from androguard.core.bytecodes.apk import APK
+from androguard.core.bytecodes.dvm import DalvikVMFormat
+from androguard.core.analysis.analysis import Analysis
+from androguard.decompiler.dad.decompile import DvMethod
+from google_play_scraper import app
+from google_play_scraper import app
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+from os import walk
+from os import walk
+# from undetected_chromedriver import Chrome
+
+
+# from selenium import webdriver
+# import apkdownloader
+# from googleplay import GooglePlayAPI
+
+
+from google_play_scraper.scraper import PlayStoreScraper
+
+
+# s = Service(ChromeDriverManager().install())
+#
+# # Ocultamos la ventana que genera chrome con estas opciones
+# options = webdriver.ChromeOptions()
+# options.add_argument("--start-maximized")
+# options.add_argument('--no-sandbox')
+# options.add_argument('--disable-dev-shm-usage')
+# # options.add_argument('--headless')
+# options.add_argument('--window-size=1920x1080')
+
+
+# application = Flask(__name__)
+
+
+# options.add_argument("disable-gpu")
+
+# s = Service(ChromeDriverManager().install())
+#
+# # Ocultamos la ventana que genera chrome con estas opciones
+# options = webdriver.ChromeOptions()
+# options.add_argument("--start-maximized")
+# # options.add_argument('--headless')
+# options.add_argument('--window-size=1920x1080')
+# #
+# driver = uc.Chrome(options=options, user_data_dir='C:/Users/migue/AppData/Local/Google/Chrome/User_Data/Default')
+
+
+def getListOfFiles(dirName):
+    # create a list of file and sub directories
+    # names in the given directory
+    listOfFile = os.listdir(dirName)
+    allFiles = list()
+    # Iterate over all the entries
+    for entry in listOfFile:
+        # Create full path
+        fullPath = os.path.join(dirName, entry)
+        # If entry is a directory then get the list of files in this directory
+        if os.path.isdir(fullPath):
+            allFiles = allFiles + getListOfFiles(fullPath)
+        else:
+            allFiles.append(fullPath)
+
+    return allFiles
 
 
 def search(query):
@@ -25,29 +87,36 @@ def search(query):
     }).text
     soup = BeautifulSoup(res, "html.parser")
     search_result = soup.find('div', {'id': 'search-res'}).find('dl', {'class': 'search-dl'})
-    if search_result != None:
-        app_tag = search_result.find('p', {'class': 'search-title'}).find('a')
-        download_link = 'https://apkpure.com' + app_tag['href']
-        return download_link
+    app_tag = search_result.find('p', {'class': 'search-title'}).find('a')
+    download_link = 'https://m.apkpure.com' + app_tag['href']
+    return download_link
 
 
-def download(link):
-    res = requests.get(link + '/download?from=details', headers={
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) '
-                      'Version/9.1.2 Safari/601.7.5 '
-    }).text
-    soup = BeautifulSoup(res, "html.parser").find('a', {'id': 'download_link'})
-    if soup != None:
-        if soup['href']:
-            r = requests.get(soup['href'], stream=True, headers={
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) '
-                              'Version/9.1.2 Safari/601.7.5 '
-            })
-            with open(link.split('/')[-1] + '.apk', 'wb') as file:
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:
-                        file.write(chunk)
-    return link.split('/')[-1] + '.apk'
+def download(link, actual_apk):
+    try:
+        res = browser.get(link + '/download?from=details&cf=1')
+        time.sleep(20)
+
+        list_of_files = glob.glob('C:/Users/migue/Downloads/*')  # * means all if need specific format then *.csv
+        latest_file = max(list_of_files, key=os.path.getctime)
+        print(latest_file)
+
+        # soup = BeautifulSoup(res, "html.parser").find('a', {'id': 'download_link'})
+        # if soup['href']:
+        #     r = requests.get(soup['href'], stream=True, headers={
+        #         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) '
+        #                       'Version/9.1.2 Safari/601.7.5 '
+        #     })
+        #     with open(link.split('/')[-1] + '.apk', 'wb') as file:
+        #         for chunk in r.iter_content(chunk_size=1024):
+        #             if chunk:
+        #                 file.write(chunk)
+        if ("apkpure" in latest_file and "apk" in latest_file):
+            return latest_file
+        else:
+            return None
+    except Exception:
+        var = None
 
 
 def download_apk(app_id):
@@ -55,196 +124,238 @@ def download_apk(app_id):
 
     if download_link is not None:
         print('Downloading {}.apk ...'.format(download_link))
-        idDownload = download(download_link)
+        id_download = download(download_link, app_id)
         print('Download completed!')
-        return idDownload
+        return id_download
     else:
         print('No results')
 
 
-def obtainList(collection):
-    resultList = scraper.list(collection, None, None, 500, 'es', 'US', True)
-    return resultList
+def obtain_list(collection, country):
+    result = []
+    cont_iter = 0
 
+    while bool(result) is False and cont_iter < 10:
+        result = scraper.list()
+        cont_iter += 1
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    return result
 
-
-@app.route('/listadoApks/')
-def my_link():
-    global packageName
-    start_time = time.time()
-
-    print('Enlace Clickado')
-
-    # unix_socket = '/cloudsql/{}'.format('boreal-byte-264518:europe-west1:python-mysql')
-
-    # connection = pymysql.connect(host='35.233.86.50',
-    #                              user='root',
-    #                              password='kalandria',
-    #                              db='testPy',
-    #                              charset='utf8mb4',
-    #                              cursorclass=pymysql.cursors.DictCursor)
-    # cursor = connection.cursor()
-
-    # cursor.execute("SET NAMES 'utf8mb4'")
-    # cursor.execute("SET CHARACTER SET utf8mb4")
-
-    collectionsList = []
-
-    collectionsList.append('TOP_FREE')
-    # collectionsList.append('TOP_PAID')
-    # collectionsList.append('GROSSING')
-    # collectionsList.append('TOP_FREE_GAMES')
-    # collectionsList.append('TOP_PAID_GAMES')
-    # collectionsList.append('TOP_GROSSING_GAMES')
-    # collectionsList.append('TRENDING')
-    # collectionsList.append('NEW_FREE')
-    # collectionsList.append('NEW_PAID')
-    # collectionsList.append('NEW_FREE_GAMES')
-    # collectionsList.append('NEW_PAID_GAMES')
-
-    for collection in collectionsList:
-
-        resultList = obtainList(collection)
-
-        # if resultList is not None:
-        #     cursor.execute(
-        #         "CREATE TABLE IF NOT EXISTS " + collection + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),position INT, created DATE)")
-        #
-        totalApps = []
-        totalAppsCollection = []
-        contPosition = 1
-
-        for app in resultList:
-
-            # Obtenemos el packageName si este no existe en la tabla (descargamos, obtenemos, borramos apk)
-
-            sql = "SELECT packageName FROM Aplicaciones WHERE appId = %s"
-
-            val = app['appId']
-
-            # cursor.execute(sql, val)
-            #
-            # packageNameQuery = cursor.fetchone()
-
-            # if packageNameQuery is not None or cursor.lastrowid is None:
-            #
-            #     # Descarga de APK
-            #     # idDownload = download_apk(app['appId'])
-            #     idDownload = None
-            #     if idDownload is not None:
-            #         if os.path.exists(idDownload):
-            #             apk = APK(idDownload)
-            #             packageName = apk.packagename
-            #             del apk
-            #             os.remove(idDownload)
-            #     else:
-            #         packageName = None
-            #
-            #
-            # else:
-            #     packageName = None
-
-            score = app.get('score')
-            ratings = app.get('ratings')
-            reviews = app.get('reviews')
-
-            if score is not None:
-                score = round(score, 2)
-
-            apps = (app['appId'],
-                    app['title'],
-                    score,
-                    app['summary'],
-                    app['description'].encode(),
-                    app['installs'],
-                    app['maxInstalls'],
-                    ratings,
-                    reviews,
-                    app['price'],
-                    app['free'],
-                    app['androidVersionText'],
-                    app['developer'],
-                    app['genre'],
-                    app['genreId'],
-                    app['contentRating'],
-                    app['adSupported'],
-                    app.get('recentChanges'),
-                    app.get('released'),
-                    app['editorsChoice'],
-                    app['url'],
-                    packageName)
-
-            collectionApps = (app['appId'],
-                              contPosition)
-
-            totalApps.append(apps)
-            totalAppsCollection.append(collectionApps)
-            contPosition += 1
-
-        sql = "INSERT INTO Aplicaciones(appId," \
-              "title," \
-              "score," \
-              "summary," \
-              "description," \
-              "installs," \
-              "maxInstalls," \
-              "ratings," \
-              "reviews," \
-              "price," \
-              "free," \
-              "androidVersionText," \
-              "developer," \
-              "genre," \
-              "genreId," \
-              "contentRating," \
-              "adSupported," \
-              "recentChanges," \
-              "released," \
-              "editorsChoice," \
-              "url," \
-              "packagename," \
-              "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON DUPLICATE KEY UPDATE updated = NOW()," \
-              "title=VALUES(title), " \
-              "score=VALUES(score), " \
-              "summary=VALUES(summary), " \
-              "description=VALUES(description), " \
-              "installs=VALUES(installs), " \
-              "maxInstalls=VALUES(maxInstalls), " \
-              "ratings=VALUES(ratings), " \
-              "reviews=VALUES(reviews), " \
-              "price=VALUES(price), " \
-              "free=VALUES(free), " \
-              "androidVersionText=VALUES(androidVersionText), " \
-              "genre=VALUES(genre), " \
-              "genreId=VALUES(genreId), " \
-              "contentRating=VALUES(contentRating), " \
-              "released=VALUES(released), " \
-              "recentChanges=VALUES(recentChanges), " \
-              "editorsChoice=VALUES(editorsChoice), " \
-              "url=VALUES(url)"
-
-        val = totalApps
-        # cursor.executemany(sql, val)
-        # connection.commit()
-        # print(cursor.rowcount, "aplicaciones insertadas.")
-
-        # Guardamos las aplicaciones en la tabla de Aplicaciones
-
-        sql = "INSERT INTO " + collection + " (appId," \
-                                            "position," \
-                                            "created) VALUES (%s,%s,CURDATE())"
-        val = totalAppsCollection
-        # cursor.executemany(sql, val)
-        # connection.commit()
-        # print(cursor.rowcount, "aplicaciones del listado insertadas.")
-
-    # connection.close()
-
-    return "--- %s segundos ---" % (time.time() - start_time)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+
+    from selenium import webdriver
+    from webdriver_manager.firefox import GeckoDriverManager
+    from selenium.webdriver.firefox.service import Service
+    from selenium.webdriver.firefox.options import Options
+
+    options = Options()
+    binary = '/usr/bin/firefox'
+    options = webdriver.FirefoxOptions()
+    options.binary = binary
+    options.add_argument('start-maximized')
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    ser = Service(GeckoDriverManager().install())
+    browser = webdriver.Firefox(service=ser)
+    browser.get('https:apkpure.com/')
+
+    start_time = time.time()
+
+    # Creamos la conexion a la base de datos
+
+    connection = pymysql.connect(host='localhost',
+                                 user='root',
+                                 password='kalandria',
+                                 db='testPy2',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+    cursor = connection.cursor()
+
+    sql = "SELECT appId FROM `APPS` WHERE genreId not LIKE ('%GAME%') AND free = 1 ORDER BY programmingLanguage DESC"
+
+    cursor.execute(sql)
+
+    list_already_apps = [item['appId'] for item in cursor.fetchall()]
+
+    cont_position = 0
+    cont_actual = 0
+
+    current_scraping_apps = []
+    total_apps = []
+
+    app_details = {}
+
+    for actual_app in list_already_apps:
+
+        # AÃ±adimos a datos de la coleccion actual
+
+        print(str(cont_position) + "/" + str(len(list_already_apps)))
+
+        cont_position += 1
+        cont_actual += 1
+
+        # Obtenemos los detalles adicionales de la aplicacion si no se encuentra ya en nuestro listado
+
+        if actual_app not in current_scraping_apps:
+
+            # apk = GooglePlayAPI.download(actual_app)
+
+            current_scraping_apps.append(actual_app)
+
+            app_details['programmingLanguage'] = ""
+
+            app_details['libraries'] = ""
+
+            sql = "SELECT programmingLanguage,libraries FROM APPS WHERE appId = %s"
+
+            val = actual_app
+
+            cursor.execute(sql, val)
+
+            language_exists = cursor.fetchone()
+
+            if language_exists['programmingLanguage'] is None:
+
+                # apk = apkdownloader.apkdownloader('miguelafannn@gmail.com', 'Windowsxp.9531', 'es_ES', 'UTC')
+                try:
+                    id_download = download_apk(actual_app)
+                except Exception:
+                    id_download = None
+                    var = None
+                # id_download = None
+                if id_download is not None:
+
+                    try:
+                        if os.path.exists(id_download):
+
+                            # Descompilamos
+                            # apk_found = False
+                            # apktool = "apktool.jar"
+                            #
+                            # for root, subdirs, files in os.walk("."):
+                            #     if apk_found is True:
+                            #         break
+                            #     for file in files:
+                            #         if file.endswith(id_download):
+                            #             os.system("java -jar " + apktool + " d " + root + "/" + file)
+                            #             apk_found = True
+                            #             break
+
+                            files_apk = []
+                            # for (dirpath, dirnames, filenames) in walk(id_download.rsplit('.', 1)[0]):
+                            #     for dirname in dirnames:
+                            #         if dirname.startswith('smali') is True:
+                            #             files_apk += (getListOfFiles(
+                            #                 id_download.rsplit('.', 1)[0] + "/" + dirname))
+
+                            # Obtenemos el lenguaje de programacion usado
+                            apk = APK(id_download)
+                            files_apk = APK.get_files(apk)
+
+                            if "appinventor" in actual_app:
+                                app_details['programmingLanguage'] = 'appInventor'
+                            elif (any("flutter" in string for string in files_apk)):
+                                app_details['programmingLanguage'] = 'Flutter'
+                            elif any("kotlin" in string for string in files_apk):
+                                app_details['programmingLanguage'] = 'Kotlin'
+                            else:
+                                app_details['programmingLanguage'] = 'Java'
+
+                            if (len(files_apk) == 0):
+                                app_details['programmingLanguage'] = ''
+
+                            # Obtenemos las librerías externas usadas
+                            libraries = []
+                            if (any("okhttp3" in string for string in files_apk)):
+                                libraries.append('okhttp3')
+
+                            if (any("picasso" in string for string in files_apk)):
+                                libraries.append('picasso')
+
+                            if (any("jackson" in string for string in files_apk)):
+                                libraries.append('jackson')
+
+                            if (any("okio" in string for string in files_apk)):
+                                libraries.append('okio')
+
+                            if (any("webrtc" in string for string in files_apk)):
+                                libraries.append('webrtc')
+
+                            if (any("exoplayer" in string for string in files_apk)):
+                                libraries.append('exoplayer')
+
+                            if (any("firebase" in string for string in files_apk)):
+                                libraries.append('firebase')
+
+                            if (any("dagger" in string for string in files_apk)):
+                                libraries.append('dagger')
+
+                            if (any("chromium" in string for string in files_apk)):
+                                libraries.append('chromium')
+
+                            if (any("spongycastle" in string for string in files_apk)):
+                                libraries.append('spongycastle')
+
+                            if (any("facebook" in string for string in files_apk)):
+                                libraries.append('facebook')
+
+                            if (any("bolts" in string for string in files_apk)):
+                                libraries.append('bolts')
+
+                            if (any("appsflyer" in string for string in files_apk)):
+                                libraries.append('appsflyer')
+
+                            if (any("Gson" in string for string in files_apk)):
+                                libraries.append('Gson')
+
+                            if (any("jsoup" in string for string in files_apk)):
+                                libraries.append('jsoup')
+
+                            if (any("retrofit" in string for string in files_apk)):
+                                libraries.append('retrofit')
+
+                            if (any("glide" in string for string in files_apk)):
+                                libraries.append('glide')
+
+                            if (any("tensorflow" in string for string in files_apk)):
+                                libraries.append('tensorflow')
+
+                            app_details['libraries'] = '|'.join(libraries)
+
+                            # os.remove(id_download.rsplit('.', 1)[0])
+
+                            try:
+                                # shutil.rmtree(id_download.rsplit('.', 1)[0])
+                                os.remove(id_download)
+                                del id_download
+                            except Exception:
+                                var = None
+
+                        apps = (
+                            app_details['programmingLanguage'], app_details['libraries'],
+                            actual_app
+                        )
+
+                        total_apps.append(apps)
+
+                    except Exception:
+                        var = None
+
+        if (cont_actual == 100):
+            # Actualizamos las aplicaciones
+            sql = "UPDATE APPS SET programmingLanguage=%s, libraries=%s WHERE appId = %s"
+
+            val = total_apps
+            cursor.executemany(sql, val)
+            connection.commit()
+            print(cursor.rowcount, "aplicaciones insertadas.")
+
+            total_apps = []
+
+            cont_actual = 0
+
+    connection.close()
+
+    print("Carga de datos realizada correctamente en %s segundos " % (time.time() - start_time))

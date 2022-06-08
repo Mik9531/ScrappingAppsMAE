@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="colorAccent">#ff128ba8</color>
-    <color name="colorPrimary">#ffa5cf47</color>
-    <color name="colorPrimaryDark">#ff516623</color>
-    <color name="notification_action_color_filter">@color/secondary_text_default_material_light</color>
-</resources>
