@@ -127,11 +127,6 @@ def my_link():
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
 
-    # sql = "SELECT appId FROM APPS"
-    #
-    # cursor.execute(sql)
-    #
-    # list_already_apps = [item['appId'] for item in cursor.fetchall()]
 
     sql = "SELECT appId FROM PERMISSIONS GROUP BY appId"
 
@@ -208,9 +203,6 @@ def my_link():
 
     countries = countries.split(',')
 
-    # countries = 'BE,BE'
-    #
-    # countries = countries.split(',')
 
     cont_countries = 0  # Marcara la posicion de la aplicacion en el listado
 
@@ -244,21 +236,15 @@ def my_link():
 
         url = 'https://play.google.com/store/apps?gl=' + country + '&hl=es'
 
-        total_apps_collection = []
-
-        total_apps = []
-
         not_list_apps = []
 
         cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
 
         # Obtenemos los datos de las aplicaciones gratuitas
-
         driver.get(url)
 
         button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
-
         try:
             actual_button = button[6]
         except Exception:
