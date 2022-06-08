@@ -12,7 +12,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 
 from pathlib import Path
@@ -127,12 +126,9 @@ def my_link():
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
 
-
     sql = "SELECT appId FROM PERMISSIONS GROUP BY appId"
 
     cursor.execute(sql)
-
-    list_already_permissions = [item['appId'] for item in cursor.fetchall()]
 
     sql = "SELECT appId FROM REVIEWS GROUP BY appId"
 
@@ -202,7 +198,6 @@ def my_link():
                 "TO,TT,TN,TR,TM,TC,TV,UG,UA,AE,GB,US,UM,UY,UZ,VU,VE,VN,VG,VI,WF,EH,YE,ZM,ZW "
 
     countries = countries.split(',')
-
 
     cont_countries = 0  # Marcara la posicion de la aplicacion en el listado
 
@@ -286,9 +281,6 @@ def my_link():
             collections_list_name.append("TOP_FREE")
             collections_list.append(TOP_FREE)
 
-        # driver.get(url)
-        # time.sleep(7)
-
         not_button = True
 
         button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
@@ -308,7 +300,6 @@ def my_link():
                 if elems is not None:
                     add_list = True
             except Exception:
-                add_list = False
                 button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
                 actual_button.click()
                 time.sleep(5)
@@ -328,9 +319,6 @@ def my_link():
             collections_list_name.append("GROSSING")
 
         # Obtenemos los datos de las aplicaciones top ventas
-
-        # driver.get(url)
-        # time.sleep(10)
 
         actual_button = True
 
@@ -374,8 +362,6 @@ def my_link():
         driver.close()
         driver.quit()
 
-        total_apps_collection = []
-
         cont_list = 0
 
         for collection in collections_list:
@@ -393,16 +379,14 @@ def my_link():
                 if (cont_list != 1 and len(total_apps_collection)):
                     table_collection = collection
 
-                    # # Creamos la tabla de la coleccion actual
-                    # cursor.execute(
-                    #     "CREATE TABLE IF NOT EXISTS " + collections_list_name[
-                    #         cont_list] + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
-                    #                      "position INT, country VARCHAR(255), created DATE)")
+                    # Creamos la tabla de la coleccion actual
+                    cursor.execute(
+                        "CREATE TABLE IF NOT EXISTS " + collections_list_name[
+                            cont_list] + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
+                                         "position INT, country VARCHAR(255), created DATE)")
 
                 else:
                     not_actual_apps.append(collection)
-
-                cont_position_actual = 1
 
                 cont_position = 1
 
