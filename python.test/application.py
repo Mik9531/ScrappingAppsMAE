@@ -116,6 +116,7 @@ def index():
 
 @application.route('/listadoApks/')
 def my_link():
+    global button, actual_button
     start_time = time.time()
     # Creamos la conexion a la base de datos
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
@@ -137,7 +138,6 @@ def my_link():
     collections_list_name = []
 
     list_already_reviews = [item['appId'] for item in cursor.fetchall()]
-
 
     check_permissions = []
     check_review_app = []
@@ -214,7 +214,6 @@ def my_link():
     for country in countries:
 
         driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-        time.sleep(5)
 
         TOP_FREE = []
         TOP_GROSSING = []
@@ -237,131 +236,123 @@ def my_link():
         cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
 
         # Obtenemos los datos de las aplicaciones gratuitas
-        driver.get(url)
+        if len(collections_list) == 0:
+            driver.get(url)
+            time.sleep(5)
 
-        button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
-        try:
-            actual_button = button[6]
-        except Exception:
-            not_button = False
-
-        if not_button is True:
             try:
-                actual_button.click()
-                time.sleep(5)
-
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
-                if elems is not None:
-                    add_list = True
-
-            except Exception:
-                add_list = False
                 button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-                actual_button.click()
-                time.sleep(5)
+                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                actual_button = button[6]
+            except Exception:
+                not_button = False
 
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+            if not_button is True:
+                try:
+                    actual_button.click()
+                    time.sleep(5)
 
-            if len(elems):
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
-                for elem in elems:
-                    href = elem.get_attribute('href')
-                    if "details?id" in href:
-                        app_id = href.split('id=')[1]
-                        if "Posicionamiento" in elem.accessible_name:
-                            TOP_FREE.append(app_id)
-                        else:
-                            if app_id not in not_list_apps:
-                                not_list_apps.append(app_id)
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-            print("Obtenidos TOP_FREE")
-            collections_list_name.append("")
-            collections_list.append(not_list_apps)
 
-            collections_list_name.append("TOP_FREE")
-            collections_list.append(TOP_FREE)
+                except Exception:
+                    add_list = False
+                    actual_button.click()
+                    time.sleep(5)
 
-        not_button = True
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-        button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                if len(elems):
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                    for elem in elems:
+                        href = elem.get_attribute('href')
+                        if "details?id" in href:
+                            app_id = href.split('id=')[1]
+                            if "Posicionamiento" in elem.accessible_name:
+                                TOP_FREE.append(app_id)
+                            else:
+                                if app_id not in not_list_apps:
+                                    not_list_apps.append(app_id)
 
-        try:
-            actual_button = button[7]
-        except Exception:
-            not_button = False
+                print("Obtenidos TOP_FREE")
+                collections_list_name.append("")
+                collections_list.append(not_list_apps)
 
-        if not_button is True:
+                collections_list_name.append("TOP_FREE")
+                collections_list.append(TOP_FREE)
+
+            not_button = True
+
             try:
-                actual_button.click()
-                time.sleep(5)
-
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
-                if elems is not None:
-                    add_list = True
-            except Exception:
                 button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-                actual_button.click()
-                time.sleep(5)
+                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                actual_button = button[7]
+            except Exception:
+                not_button = False
 
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+            if not_button is True:
+                try:
+                    actual_button.click()
+                    time.sleep(5)
 
-            if len(elems):
-                for elem in elems:
-                    href = elem.get_attribute('href')
-                    if "details?id" in href:
-                        app_id = href.split('id=')[1]
-                        if "Posicionamiento" in elem.accessible_name:
-                            TOP_GROSSING.append(app_id)
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-            print("Obtenidos GROSSING")
-            collections_list.append(TOP_GROSSING)
-            collections_list_name.append("GROSSING")
+                except Exception:
+                    actual_button.click()
+                    time.sleep(5)
 
-        # Obtenemos los datos de las aplicaciones top ventas
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-        actual_button = True
+                if len(elems):
+                    for elem in elems:
+                        href = elem.get_attribute('href')
+                        if "details?id" in href:
+                            app_id = href.split('id=')[1]
+                            if "Posicionamiento" in elem.accessible_name:
+                                TOP_GROSSING.append(app_id)
 
-        button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                print("Obtenidos GROSSING")
+                collections_list.append(TOP_GROSSING)
+                collections_list_name.append("GROSSING")
 
-        try:
-            actual_button = button[8]
-        except Exception:
-            not_button = False
+            # Obtenemos los datos de las aplicaciones top ventas
 
-        if not_button is True:
+            actual_button = True
+
             try:
-                button[8].click()
-                time.sleep(5)
-
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
-                if elems is not None:
-                    add_list = True
-
-            except Exception:
-                add_list = False
                 button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-                button[8].click()
-                time.sleep(5)
+                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                actual_button = button[8]
+            except Exception:
+                not_button = False
 
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
+            if not_button is True:
+                try:
+                    button[8].click()
+                    time.sleep(5)
 
-            if len(elems):
-                elems = driver.find_elements(by=By.TAG_NAME, value='a')
-                for elem in elems:
-                    href = elem.get_attribute('href')
-                    if "details?id" in href:
-                        app_id = href.split('id=')[1]
-                        if "Posicionamiento" in elem.accessible_name:
-                            TOP_PAID.append(app_id)
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-            print("Obtenidos TOP_PAID")
-            collections_list.append(TOP_PAID)
+                except Exception:
+                    button[8].click()
+                    time.sleep(5)
 
-        driver.close()
-        driver.quit()
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
+
+                if len(elems):
+                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                    for elem in elems:
+                        href = elem.get_attribute('href')
+                        if "details?id" in href:
+                            app_id = href.split('id=')[1]
+                            if "Posicionamiento" in elem.accessible_name:
+                                TOP_PAID.append(app_id)
+
+                print("Obtenidos TOP_PAID")
+                collections_list.append(TOP_PAID)
+
+            driver.close()
+            driver.quit()
 
         cont_list = 0
 

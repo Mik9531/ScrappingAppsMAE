@@ -2,19 +2,6 @@
 
 FROM python:3
 
-
-# Copy local code to the container image.
-RUN mkdir -p /home/flask_app/listadoApks
-WORKDIR /home/flask_app/listadoApks
-
-COPY templates /home/flask_app/listadoApks/templates
-COPY APKS /home/flask_app/listadoApks/APKS
-COPY application.py wsgi.py boot.sh ./
-COPY requirements.txt /home/flask_app/listadoApks/requirements.txt
-
-ENV TZ=Europe/Madrid
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
-
 RUN apt-get update \
     && apt-get -y install gcc make \
     && rm -rf /var/lib/apt/lists/*s
@@ -27,18 +14,28 @@ RUN apt-get install -y google-chrome-stable
 RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 RUN dpkg -i google-chrome-stable_current_amd64.deb; apt-get -fy install
 
+RUN pip install gunicorn
+RUN pip install gunicorn flask
+RUN pip install google-play-scraper
 
-RUN chmod +x boot.sh
+
+# Copy local code to the container image.
+RUN mkdir -p /home/flask_app/listadoApks
+WORKDIR /home/flask_app/listadoApks
+
+COPY templates /home/flask_app/listadoApks/templates
+COPY APKS /home/flask_app/listadoApks/APKS
+COPY application.py wsgi.py boot.sh ./
+COPY requirements.txt /home/flask_app/listadoApks/requirements.txt
+
+RUN pip install -r requirements.txt
+
 
 ENV PORT 5000
 
 ENV FLASK_APP application.py
 
-RUN pip install -r requirements.txt
-RUN pip install gunicorn
-RUN pip install gunicorn flask
-RUN pip install google-play-scraper
-
+RUN chmod +x boot.sh
 
 EXPOSE 5000
 ENTRYPOINT ["sh", "./boot.sh"]
