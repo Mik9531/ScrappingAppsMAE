@@ -13,6 +13,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
+import country_converter as coco
+
+cc = coco.CountryConverter()
 
 from pathlib import Path
 
@@ -221,8 +224,6 @@ def my_link():
 
         collections_list = []
 
-        print(country)
-
         print(str(cont_countries) + "/" + str(len(countries)))
 
         cont_countries += 1
@@ -230,6 +231,10 @@ def my_link():
         not_button = True
 
         url = 'https://play.google.com/store/apps?gl=' + country + '&hl=es'
+
+        country = coco.convert(names=country, to='ISO3')
+
+        print(country)
 
         not_list_apps = []
 

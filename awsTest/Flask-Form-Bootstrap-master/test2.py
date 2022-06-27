@@ -38,6 +38,10 @@ import itertools
 
 from fake_useragent import UserAgent
 
+import country_converter as coco
+
+cc = coco.CountryConverter()
+
 base_url = 'http://apkleecher.com/'
 version_url = 'https://apksfull.com/version/'
 search_url = 'http://apkleecher.com/?ids='
@@ -161,193 +165,42 @@ def download_apk(actual_apk):
 
 
 if __name__ == '__main__':
-
     start_time = time.time()
 
     # Creamos la conexion a la base de datos
 
-    connection = pymysql.connect(host='localhost',
+    connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
-                                 db='testPy2',
+                                 db='appsData',
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
 
-    sql = "SELECT appId FROM `APPS` WHERE genreId not LIKE ('%GAME%') AND free = 1 ORDER BY programmingLanguage ASC"
-
-    cursor.execute(sql)
-
-    list_already_apps = [item['appId'] for item in cursor.fetchall()]
-
-    cont_position = 0
-    cont_actual = 0
-
-    current_scraping_apps = []
     total_apps = []
 
-    app_details = {}
+    countries = "SR,SJ,SZ,SE,CH,SY,TW,TJ,TZ,TH,TL,TG,TK," \
+                "TO,TT,TN,TR,TM,TC,TV,UG,UA,AE,GB,US,UM,UY,UZ,VU,VE,VN,VG,VI,WF,EH,YE,ZM,ZW "
 
-    for actual_app in list_already_apps:
+    countries = countries.split(',')
 
-        # AÃ±adimos a datos de la coleccion actual
+    for country in countries:
+        iso2_code = country
+        countryCode = coco.convert(names=iso2_code, to='ISO3')
 
-        print(str(cont_position) + "/" + str(len(list_already_apps)))
+        apps = (
+            countryCode, country
+        )
 
-        cont_position += 1
-        cont_actual += 1
+        total_apps.append(apps)
 
-        # Obtenemos los detalles adicionales de la aplicacion si no se encuentra ya en nuestro listado
+        sql = "UPDATE TOP_FREE SET country=%s WHERE country = %s"
 
-        if actual_app not in current_scraping_apps:
+        val = total_apps
+        cursor.executemany(sql, val)
+        connection.commit()
+        print(cursor.rowcount, "aplicaciones modificadas.")
 
-            # apk = GooglePlayAPI.download(actual_app)
+connection.close()
 
-            current_scraping_apps.append(actual_app)
-
-            app_details['programmingLanguage'] = ""
-
-            app_details['libraries'] = ""
-
-            sql = "SELECT programmingLanguage,libraries FROM APPS WHERE appId = %s"
-
-            val = actual_app
-
-            cursor.execute(sql, val)
-
-            language_exists = cursor.fetchone()
-
-            if language_exists['programmingLanguage'] is None:
-
-                # actual_app = 'com.whatsapp'
-                try:
-                    id_download = download_apk(actual_app)
-                except Exception:
-                    id_download = None
-                # id_download = None
-                if id_download is not None:
-
-                    if id_download is not None:
-                        if os.path.exists(id_download):
-
-                            files_apk = []
-
-                            # Obtenemos el lenguaje de programacion usado
-                            try:
-                                apk = APK(id_download)
-                                files_apk = APK.get_files(apk)
-
-                                if (files_apk[0] == (actual_app + ".apk")):
-                                    print("extrayendo apk")
-                                    p = Path(id_download)
-                                    p.rename(p.with_suffix('.zip'))
-                                    shutil.unpack_archive("output2/" + actual_app + '.zip', extract_dir="output2")
-                                    apk = APK(id_download)
-                                    files_apk = APK.get_files(apk)
-                                    os.remove("output2/" + actual_app + '.zip')
-
-                                if "appinventor" in actual_app:
-                                    app_details['programmingLanguage'] = 'appInventor'
-                                elif (any("flutter" in string for string in files_apk)):
-                                    app_details['programmingLanguage'] = 'Flutter'
-                                elif any("kotlin" in string for string in files_apk):
-                                    app_details['programmingLanguage'] = 'Kotlin'
-                                else:
-                                    app_details['programmingLanguage'] = 'Java'
-
-                                if (len(files_apk) == 0):
-                                    app_details['programmingLanguage'] = ''
-
-                                # Obtenemos las librerías externas usadas
-                                libraries = []
-                                if (any("okhttp3" in string for string in files_apk)):
-                                    libraries.append('okhttp3')
-
-                                if (any("picasso" in string for string in files_apk)):
-                                    libraries.append('picasso')
-
-                                if (any("jackson" in string for string in files_apk)):
-                                    libraries.append('jackson')
-
-                                if (any("okio" in string for string in files_apk)):
-                                    libraries.append('okio')
-
-                                if (any("webrtc" in string for string in files_apk)):
-                                    libraries.append('webrtc')
-
-                                if (any("exoplayer" in string for string in files_apk)):
-                                    libraries.append('exoplayer')
-
-                                if (any("firebase" in string for string in files_apk)):
-                                    libraries.append('firebase')
-
-                                if (any("dagger" in string for string in files_apk)):
-                                    libraries.append('dagger')
-
-                                if (any("chromium" in string for string in files_apk)):
-                                    libraries.append('chromium')
-
-                                if (any("spongycastle" in string for string in files_apk)):
-                                    libraries.append('spongycastle')
-
-                                if (any("facebook" in string for string in files_apk)):
-                                    libraries.append('facebook')
-
-                                if (any("bolts" in string for string in files_apk)):
-                                    libraries.append('bolts')
-
-                                if (any("appsflyer" in string for string in files_apk)):
-                                    libraries.append('appsflyer')
-
-                                if (any("Gson" in string for string in files_apk)):
-                                    libraries.append('Gson')
-
-                                if (any("jsoup" in string for string in files_apk)):
-                                    libraries.append('jsoup')
-
-                                if (any("retrofit" in string for string in files_apk)):
-                                    libraries.append('retrofit')
-
-                                if (any("glide" in string for string in files_apk)):
-                                    libraries.append('glide')
-
-                                if (any("tensorflow" in string for string in files_apk)):
-                                    libraries.append('tensorflow')
-
-                                app_details['libraries'] = '|'.join(libraries)
-
-                            except Exception:
-                                var = None
-
-                            # os.remove(id_download.rsplit('.', 1)[0])
-
-                            try:
-                                # shutil.rmtree(id_download.rsplit('.', 1)[0])
-                                os.remove(id_download)
-                                del id_download
-                            except Exception:
-                                var = None
-
-                        apps = (
-                            app_details['programmingLanguage'], app_details['libraries'],
-                            actual_app
-                        )
-
-                        total_apps.append(apps)
-
-        if (cont_actual == 10):
-            # Actualizamos las aplicaciones
-            sql = "UPDATE APPS SET programmingLanguage=%s, libraries=%s WHERE appId = %s"
-
-            val = total_apps
-            cursor.executemany(sql, val)
-            connection.commit()
-            print(cursor.rowcount, "aplicaciones insertadas.")
-
-            total_apps = []
-
-            cont_actual = 0
-
-    connection.close()
-
-    print("Carga de datos realizada correctamente en %s segundos " % (time.time() - start_time))
+print("Carga de datos realizada correctamente en %s segundos " % (time.time() - start_time))

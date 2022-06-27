@@ -11,7 +11,7 @@ WORKDIR /home/dashboard
 COPY assets /home/dashboard/assets
 
 
-COPY index.py app.py boot.sh home.py listado_apks.py top_grossing.py requirements.txt ./
+COPY index.py app.py boot.sh home.py listado_apks.py top_maps.py requirements.txt ./
 RUN chmod +x boot.sh
 
 
