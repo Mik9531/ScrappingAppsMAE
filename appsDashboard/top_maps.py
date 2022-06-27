@@ -112,17 +112,13 @@ def update_graph(date_selected, app_selected):
     date_selected = date_selected.date()
 
     dffFree = top_free_apps.copy()
-    print(dffFree.head())
 
     dffFree = dffFree[dffFree.created == date_selected]
-    print(dffFree.head())
 
     if app_selected is None:
         dffFree = dffFree[dffFree.position == 1]
     else:
         dffFree = dffFree[dffFree.appId == app_selected]
-
-    print(dffFree.head())
 
     figFree = go.Figure(data=go.Choropleth(
         locations=dffFree['country'],
@@ -156,17 +152,13 @@ def update_graph(date_selected, app_selected):
     )
 
     dffPaid = top_paid_apps.copy()
-    print(dffPaid.head())
 
     dffPaid = dffPaid[dffPaid.created == date_selected]
-    print(dffPaid.head())
 
     if app_selected is None:
         dffPaid = dffPaid[dffPaid.position == 1]
     else:
         dffPaid = dffPaid[dffPaid.appId == app_selected]
-
-    print(dffPaid.head())
 
     figPaid = go.Figure(data=go.Choropleth(
         locations=dffPaid['country'],
@@ -200,17 +192,13 @@ def update_graph(date_selected, app_selected):
     )
 
     dffPaid = top_grossing_apps.copy()
-    print(dffPaid.head())
 
     dffPaid = dffPaid[dffPaid.created == date_selected]
-    print(dffPaid.head())
 
     if app_selected is None:
         dffPaid = dffPaid[dffPaid.position == 1]
     else:
         dffPaid = dffPaid[dffPaid.appId == app_selected]
-
-    print(dffPaid.head())
 
     figGrossing = go.Figure(data=go.Choropleth(
         locations=dffPaid['country'],

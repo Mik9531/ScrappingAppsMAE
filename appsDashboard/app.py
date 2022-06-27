@@ -13,21 +13,25 @@ dbConnection = sqlEngine.connect()
 top_grossing_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from GROSSING TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId) WHERE COUNTRY = 'USA' LIMIT 100000", con=dbConnection)
+    "TG.appId) LIMIT 100", con=dbConnection)
 
 top_free_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_FREE TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId) WHERE COUNTRY = 'USA' LIMIT 100000", con=dbConnection)
+    "TG.appId) LIMIT 100", con=dbConnection)
 
 top_paid_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_PAID TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId) WHERE COUNTRY = 'USA' LIMIT 100000", con=dbConnection)
+    "TG.appId)  LIMIT 100", con=dbConnection)
 
 titles_apps = pd.read_sql(
-    "SELECT A.title, A.appId from APPS A GROUP BY A.appId ORDER BY A.title ASC",
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.title ASC LIMIT 100",
     sqlEngine).to_dict(orient='records')
+
+titles_apps_list = pd.read_sql(
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.title ASC LIMIT 100"
+    , con=dbConnection)
 
 top_apps = pd.read_sql(
     "SELECT A.title,A.icon, TA.position, A.summary, TA.appId from TOP_FREE TA INNER JOIN APPS A ON (A.appId = TA.appId) ORDER BY TA.created DESC LIMIT 10",
@@ -45,7 +49,7 @@ last_date = pd.read_sql(
 last_date_day = format(last_date['created'][0])
 
 top10Free_apps = pd.read_sql(
-    "SELECT  TF.position, A.title, A.url, A.icon FROM `TOP_FREE` TF INNER JOIN APPS A ON A.appId = TF.appId WHERE country = 'US' AND TF.CREATED = %s ORDER BY POSITION LIMIT 10",
+    "SELECT  TF.position, A.title, A.url, A.icon FROM `TOP_FREE` TF INNER JOIN APPS A ON A.appId = TF.appId WHERE country = 'USA' AND TF.CREATED = %s ORDER BY POSITION LIMIT 10",
     params=['2022-06-26'],
     con=sqlEngine).to_dict(orient='records')
 

@@ -100,7 +100,7 @@ home_layout = html.Div([
 
             dbc.Col(
                 dbc.Card(
-                    dbc.CardBody([
+                    dbc.CardBody([  # Importante desactivar adBlock
                         html.Iframe(srcDoc='''
                            <a class="twitter-timeline" href="https://twitter.com/GooglePlay?ref_src=twsrc%5Etfw">Tweets by GooglePlay</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
                         ''',

@@ -3,11 +3,14 @@ from datetime import date
 from datetime import datetime
 
 import dash_bootstrap_components as dbc
+from dash import dash_table
 import plotly.graph_objects as go
 from dash import dcc, html, Input, Output
 
-from app import app, last_date, init_date, titles_apps, top_grossing_apps
+from app import app, last_date, init_date, titles_apps, top_grossing_apps, titles_apps_list
 from dash_iconify import DashIconify
+import pandas as pd
+from collections import OrderedDict
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
@@ -15,6 +18,17 @@ last_date = last_date['created'].values[0]
 # ------------------------------------------------------------------------------
 # App layout
 
+data = OrderedDict(
+    [
+        ("Date", ["2015-01-01", "2015-10-24", "2016-05-10", "2017-01-10", "2018-05-10", "2018-08-15"]),
+        ("Region", ["Montreal", "Toronto", "New York City", "Miami", "San Francisco", "London"]),
+        ("Temperature", [1, -20, 3.512, 4, 10423, -441.2]),
+        ("Humidity", [10, 20, 30, 40, 50, 60]),
+        ("Pressure", [2, 10924, 3912, -10, 3591.2, 15]),
+    ]
+)
+
+df = pd.DataFrame(data)
 
 apps_layout = html.Div([
 
@@ -128,6 +142,27 @@ apps_layout = html.Div([
         ]
     ),
 
+    dbc.Card(
+        dbc.CardBody(
+            dbc.Row(
+                dash_table.DataTable(
+                    data=df.to_dict('records'),
+                    columns=[{'id': c, 'name': c} for c in df.columns],
+                    style_as_list_view=True,
+                    style_cell={'padding': '5px'},
+                    style_header={
+                        'backgroundColor': 'white',
+                        'fontWeight': 'bold'
+                    },
+                    style_cell_conditional=[
+                        {
+                            'if': {'column_id': c},
+                            'textAlign': 'left'
+                        } for c in ['Date', 'Region']
+                    ],
+                ))
+        ))
+
 ])
 
 
@@ -144,15 +179,14 @@ apps_layout = html.Div([
     Input(component_id='slct_app', component_property='value')
 )
 def update_graph(app_selected):
-    dff = top_grossing_apps.copy()
-    print(dff.head())
+    dff = titles_apps_list.copy()
 
     if app_selected is None:
-        dff = dff[dff.position == 1]
+        dff = dff[dff.appId == 'com.instagram.android']  # Aplicación más descargada
     else:
         dff = dff[dff.appId == app_selected]
 
-    dff = dff[dff.country == 'USA']
+    # dff = dff[dff.country == 'USA']
 
     dff = dff.iloc[-1:]
 
@@ -179,6 +213,5 @@ def update_graph(app_selected):
         target="_blank"), style={"width": "35%"}
 
     )
-    print(dff.head())
 
     return url_img, app_title, app_summary, app_score, app_developer, div_url
