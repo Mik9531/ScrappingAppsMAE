@@ -17,10 +17,10 @@ body {
     opacity: 0;
 }
 
-.page-content{
+.page-content {
     max-width: 80%;
-	margin: 0 auto !important;
-	float: none !important;
+    margin: 0 auto !important;
+    float: none !important;
 }
 
 .a-tabs {
@@ -40,6 +40,11 @@ body {
 .card {
     border: none;
     box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.10);
+
+}
+
+.card-header {
+    text-align: center;
 
 }
 
