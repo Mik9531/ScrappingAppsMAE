@@ -11,6 +11,7 @@ from app import app, last_date, init_date, titles_apps, top_grossing_apps, title
 from dash_iconify import DashIconify
 import pandas as pd
 from collections import OrderedDict
+from sqlalchemy import create_engine
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
@@ -18,17 +19,17 @@ last_date = last_date['created'].values[0]
 # ------------------------------------------------------------------------------
 # App layout
 
-data = OrderedDict(
-    [
-        ("Date", ["2015-01-01", "2015-10-24", "2016-05-10", "2017-01-10", "2018-05-10", "2018-08-15"]),
-        ("Region", ["Montreal", "Toronto", "New York City", "Miami", "San Francisco", "London"]),
-        ("Temperature", [1, -20, 3.512, 4, 10423, -441.2]),
-        ("Humidity", [10, 20, 30, 40, 50, 60]),
-        ("Pressure", [2, 10924, 3912, -10, 3591.2, 15]),
-    ]
-)
-
-df = pd.DataFrame(data)
+# data = OrderedDict(
+#     [
+#         ("Date", ["2015-01-01", "2015-10-24", "2016-05-10", "2017-01-10", "2018-05-10", "2018-08-15"]),
+#         ("Region", ["Montreal", "Toronto", "New York City", "Miami", "San Francisco", "London"]),
+#         ("Temperature", [1, -20, 3.512, 4, 10423, -441.2]),
+#         ("Humidity", [10, 20, 30, 40, 50, 60]),
+#         ("Pressure", [2, 10924, 3912, -10, 3591.2, 15]),
+#     ]
+# )
+#
+# df = pd.DataFrame(data)
 
 apps_layout = html.Div([
 
@@ -49,7 +50,7 @@ apps_layout = html.Div([
                                                  options=[
                                                      {"label": i['title'], "value": i['appId']} for i in titles_apps],
                                                  multi=False,
-                                                 value='tv.twitch.android.app',
+                                                 value='com.instagram.android',
                                                  optionHeight=40,
                                                  placeholder='Selecciona...',
                                                  clearable=False,
@@ -146,21 +147,26 @@ apps_layout = html.Div([
         dbc.CardBody(
             dbc.Row(
                 dash_table.DataTable(
-                    data=df.to_dict('records'),
-                    columns=[{'id': c, 'name': c} for c in df.columns],
-                    style_as_list_view=True,
-                    style_cell={'padding': '5px'},
-                    style_header={
-                        'backgroundColor': 'white',
-                        'fontWeight': 'bold'
-                    },
-                    style_cell_conditional=[
-                        {
-                            'if': {'column_id': c},
-                            'textAlign': 'left'
-                        } for c in ['Date', 'Region']
+                    id='rowsPermit',
+                    columns=[
+                        {'name': 'Localización', 'id': 'Location'},
+                        {'name': 'Calendario', 'id': 'Calendar'},
+                        {'name': 'Micrófono', 'id': 'Microphone'},
+                        {'name': 'Contactos', 'id': 'Contacts'},
+                        {'name': 'Historial', 'id': 'DeviceHistory'},
+                        {'name': 'Cámara', 'id': 'Camera'},
+                        {'name': 'Almacenamiento', 'id': 'Storage'},
+                        {'name': 'WiFi', 'id': 'WiFi'},
+                        {'name': 'Acceso a media', 'id': 'PhotosMediaFiles'},
+                        {'name': 'Teléfono', 'id': 'Phone'},
+                        {'name': 'ID Dispositivo', 'id': 'DeviceID'},
+                        {'name': 'SMS', 'id': 'SMS'},
+                        {'name': 'Identidad', 'id': 'Identity'},
                     ],
-                ))
+                    style_cell={'textAlign': 'center'},
+                    data=[{'rowsPermit': i} for i in range(1)],
+                    editable=True,
+                ), )
         ))
 
 ])
@@ -175,10 +181,12 @@ apps_layout = html.Div([
      Output('output_summary', 'children'),
      Output('output_score', 'children'),
      Output('output_developer', 'children'),
-     Output('output_url', 'children')],
+     Output('output_url', 'children'),
+     Output('rowsPermit', 'data')],
     Input(component_id='slct_app', component_property='value')
 )
 def update_graph(app_selected):
+    global rows
     dff = titles_apps_list.copy()
 
     if app_selected is None:
@@ -214,4 +222,85 @@ def update_graph(app_selected):
 
     )
 
-    return url_img, app_title, app_summary, app_score, app_developer, div_url
+    # Permisos de la aplicacion
+
+    sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
+
+    dbConnection = sqlEngine.connect()
+
+    permitsApp = pd.read_sql(
+        "SELECT Location,Calendar,Microphone,Contacts,DeviceHistory,Camera,Storage,WiFi,PhotosMediaFiles,Phone,DeviceID,SMS,Identity FROM PERMISSIONS P WHERE appId = %s LIMIT 1",
+        params=[app_selected],
+        con=dbConnection).to_dict(orient='records')
+
+    dbConnection.close()
+
+    for permit in permitsApp:
+        if permit['Location'] == '1':
+            permit['Location'] = '✔'
+        else:
+            permit['Location'] = '✘'
+
+        if permit['Calendar'] == '1':
+            permit['Calendar'] = '✔'
+        else:
+            permit['Calendar'] = '✘'
+
+        if permit['Microphone'] == '1':
+            permit['Microphone'] = '✔'
+        else:
+            permit['Microphone'] = '✘'
+
+        if permit['Contacts'] == '1':
+            permit['Contacts'] = '✔'
+        else:
+            permit['Contacts'] = '✘'
+
+        if permit['DeviceHistory'] == '1':
+            permit['DeviceHistory'] = '✔'
+        else:
+            permit['DeviceHistory'] = '✘'
+
+        if permit['Camera'] == '1':
+            permit['Camera'] = '✔'
+        else:
+            permit['Camera'] = '✘'
+
+        if permit['Storage'] == '1':
+            permit['Storage'] = '✔'
+        else:
+            permit['Storage'] = '✘'
+
+        if permit['WiFi'] == '1':
+            permit['WiFi'] = '✔'
+        else:
+            permit['WiFi'] = '✘'
+
+        if permit['PhotosMediaFiles'] == '1':
+            permit['PhotosMediaFiles'] = '✔'
+        else:
+            permit['PhotosMediaFiles'] = '✘'
+
+        if permit['Phone'] == '1':
+            permit['Phone'] = '✔'
+        else:
+            permit['Phone'] = '✘'
+
+        if permit['DeviceID'] == '1':
+            permit['DeviceID'] = '✔'
+        else:
+            permit['DeviceID'] = '✘'
+
+        if permit['SMS'] == '1':
+            permit['SMS'] = '✔'
+        else:
+            permit['SMS'] = '✘'
+
+        if permit['Identity'] == '1':
+            permit['Identity'] = '✔'
+        else:
+            permit['Identity'] = '✘'
+
+    rows = permitsApp
+
+    return url_img, app_title, app_summary, app_score, app_developer, div_url, rows

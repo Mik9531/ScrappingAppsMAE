@@ -20,22 +20,25 @@ top_free_apps = pd.read_sql(
     "= "
     "TG.appId) LIMIT 100", con=dbConnection)
 
+
 top_paid_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_PAID TG INNER JOIN APPS A ON (A.appId "
     "= "
     "TG.appId)  LIMIT 100", con=dbConnection)
 
 titles_apps = pd.read_sql(
-    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.title ASC LIMIT 100",
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC LIMIT 100",
     sqlEngine).to_dict(orient='records')
 
 titles_apps_list = pd.read_sql(
-    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.title ASC LIMIT 100"
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC LIMIT 100"
     , con=dbConnection)
 
 top_apps = pd.read_sql(
     "SELECT A.title,A.icon, TA.position, A.summary, TA.appId from TOP_FREE TA INNER JOIN APPS A ON (A.appId = TA.appId) ORDER BY TA.created DESC LIMIT 10",
     sqlEngine)
+
+
 
 # Seleccionamos la fecha inicial de la base de datos (y fecha mínima a poder seleccionar)
 init_date = pd.read_sql(
