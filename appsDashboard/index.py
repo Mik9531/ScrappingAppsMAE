@@ -4,6 +4,7 @@ from app import app
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 from top_maps import top_maps_layout
+from graphics import graphics_layout
 from home import home_layout
 from totalApps import apps_layout
 from listado_apks import obtain_layout
@@ -17,6 +18,7 @@ link_tabs_layout = html.Div([
         dbc.Col(dcc.Link('Home', href='/', className="a-tabs"), className="col-tab"),
         dbc.Col(dcc.Link('Aplicaciones', href='/apps', className="a-tabs"), className="col-tab"),
         dbc.Col(dcc.Link('Mapas Aplicaciones', href='/top-maps', className="a-tabs"), className="col-tab"),
+        dbc.Col(dcc.Link('Gráficos', href='/graphics', className="a-tabs"), className="col-tab"),
         dbc.Col(dcc.Link('Scraping', href='/obtain', className="a-tabs"), className="col-tab")
     ], className="index-tabs"
     )
@@ -71,6 +73,8 @@ def switch_tab(pathname):
         return obtain_layout
     elif pathname == '/apps':
         return apps_layout
+    elif pathname == '/graphics':
+        return graphics_layout
 
 
 if __name__ == '__main__':

@@ -58,7 +58,8 @@ apps_layout = html.Div([
 
                                         dbc.Col(
 
-                                            html.Img(id='output_img', height='350px', width='350px'),
+                                            html.Img(id='output_img', height='350px', width='350px',
+                                                     style={'text-align-last': 'center'}),
 
                                         ),
 
@@ -66,11 +67,34 @@ apps_layout = html.Div([
 
                                 ]
                             ),
-                            className="cards"
+                            className="cards",
+                            style={'text-align-last': 'center'}
+
+                        ),
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    dbc.CardHeader("Tecnología"),
+
+                                    dbc.Row(
+
+                                        dbc.Col(
+
+                                            html.Img(id='output_tech_img', height='100px'
+                                                     ),
+
+                                        ),
+
+                                    )
+
+                                ]
+                            ),
+                            className="cards",
+                            style={'text-align-last': 'center'}
                         )
                     ]
                 ),
-                width={'size': 4, "offset": 0, 'order': 1}
+                width={'size': 4, "offset": 0, 'order': 0}
             ),
             dbc.Col(dbc.Card(
                 dbc.CardBody(
@@ -107,6 +131,21 @@ apps_layout = html.Div([
                                     dbc.Row(
 
                                         html.P(id="output_summary", className="card-title",
+                                               ),
+
+                                    ),
+                                    html.Br(),
+
+                                    dbc.Row(
+
+                                        html.H6("Lanzado", className="card-title",
+                                                ),
+
+                                    ),
+
+                                    dbc.Row(
+
+                                        html.P(id="output_released", className="card-title",
                                                ),
 
                                     ),
@@ -160,9 +199,19 @@ apps_layout = html.Div([
 
                                     dbc.Row(
 
-                                        html.Div(id="output_url"
+                                        html.H6("Librerías", className="card-title",
+                                                ),
 
-                                                 ))],
+                                    ),
+
+                                    dbc.Row(
+
+                                        html.P(id='libraries'),
+
+                                    ),
+                                    html.Br(),
+
+                                ],
 
                                 width={'size': 6, "offset": 0, 'order': 0}
                             ),
@@ -245,6 +294,19 @@ apps_layout = html.Div([
                                     ),
                                     html.Br(),
 
+                                    dbc.Row(
+
+                                        html.H6("Enlace a Google Play", className="card-title",
+                                                ),
+
+                                    ),
+
+                                    dbc.Row(
+
+                                        html.Div(id="output_url"
+
+                                                 ))
+
                                 ],
 
                                 width={'size': 6, "offset": 0, 'order': 0}
@@ -285,6 +347,11 @@ apps_layout = html.Div([
                             {'name': 'SMS', 'id': 'SMS'},
                             {'name': 'Identidad', 'id': 'Identity'},
                         ],
+                        style_header={
+                            'backgroundColor': 'rgb(210, 210, 210)',
+                            'color': 'black',
+                            'fontWeight': 'bold'
+                        },
                         style_cell={'textAlign': 'center'},
                         data=[{'rowsPermit': i} for i in range(1)],
                         editable=True,
@@ -294,28 +361,34 @@ apps_layout = html.Div([
     dbc.Card(
         dbc.CardBody(
             [
-                dbc.CardHeader("Reseñas de la aplicación"),
+                dbc.CardHeader("Reseñas más relevantes"),
                 dbc.Row(
                     dash_table.DataTable(
-                        id='rowsPermit',
+                        id='rowsReviews',
                         columns=[
-                            {'name': 'Localización', 'id': 'Identity'},
-                            {'name': 'Calendario', 'id': 'Identity'},
-                            {'name': 'Micrófono', 'id': 'Identity'},
-                            {'name': 'Contactos', 'id': 'Identity'},
-                            {'name': 'Historial', 'id': 'Identity'},
-                            {'name': 'Cámara', 'id': 'Identity'},
-                            {'name': 'Almacenamiento', 'id': 'Identity'},
-                            {'name': 'WiFi', 'id': 'Identity'},
-                            {'name': 'Acceso a media', 'id': 'Identity'},
-                            {'name': 'Teléfono', 'id': 'Identity'},
-                            {'name': 'ID Dispositivo', 'id': 'Identity'},
-                            {'name': 'SMS', 'id': 'Identity'},
-                            {'name': 'Identidad', 'id': 'Identity'},
+                            {'name': 'Usuario', 'id': 'userName'},
+                            {'name': 'Fecha de la reseña', 'id': 'dateReview'},
+                            {'name': 'Puntuación', 'id': 'score'},
+                            {'name': 'Reseña', 'id': 'text'}
+
                         ],
                         style_cell={'textAlign': 'center'},
-                        data=[{'rowsPermit': i} for i in range(1)],
-                        editable=True,
+                        data=[{'rowsReviews': i} for i in range(1)],
+                        editable=False,
+                        style_data={
+                            'whiteSpace': 'normal',
+                            'height': 'auto',
+                        },
+                        style_header={
+                            'backgroundColor': 'rgb(210, 210, 210)',
+                            'color': 'black',
+                            'fontWeight': 'bold'
+                        },
+                        style_data_conditional=[
+                            {
+                                'if': {'row_index': 'odd'},
+                                'backgroundColor': '#F5F5F5',
+                            }],
                     ), )
             ]))
 
@@ -327,6 +400,8 @@ apps_layout = html.Div([
 @app.callback(
 
     [Output('output_img', 'src'),
+     Output('output_tech_img', 'src'),
+     Output('libraries', 'children'),
      Output('output_title', 'children'),
      Output('output_summary', 'children'),
      Output('output_score', 'children'),
@@ -337,12 +412,15 @@ apps_layout = html.Div([
      Output('output_androidVersionText', 'children'),
      Output('output_genre', 'children'),
      Output('output_contentRating', 'children'),
+     Output('output_released', 'children'),
      Output('output_recentChanges', 'children'),
-     Output('rowsPermit', 'data')],
+     Output('rowsPermit', 'data'),
+     Output('rowsReviews', 'data')
+     ],
     Input(component_id='slct_app', component_property='value')
 )
 def update_graph(app_selected):
-    global rows
+    global rowsPermit
     dff = titles_apps_list.copy()
 
     if app_selected is None:
@@ -365,6 +443,7 @@ def update_graph(app_selected):
         app_url = dff.url.values[0]
         app_installs = dff.installs.values[0]
         price = '%s €' % priceFormat
+        released = dff.released.values[0]
 
         if dff.androidVersionText.values[0] == 'Varies with device':
             androidVersionText = 'Varía según el dispositivo'
@@ -374,6 +453,26 @@ def update_graph(app_selected):
         genre = dff.genre.values[0]
         contentRating = dff.contentRating.values[0]
         recentChanges = dff.recentChanges.values[0]
+        programmingLanguageImg = dff.programmingLanguage.values[0]
+
+        if programmingLanguageImg == 'Kotlin':
+            programmingLanguageImg = 'https://static.platzi.com/media/blog/kotlin-d9989db6-1843-478c-87d4-e8250222417e.jpg'
+        elif programmingLanguageImg == 'Java':
+            programmingLanguageImg = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSp1rLnnxIth_0GaWjmgbUD0ZygnpBGDAXIDNevsrcrMkSGQRrRU-VvOrIsxlRCkFFL8mo&usqp=CAU'
+
+        elif programmingLanguageImg == 'Flutter':
+            programmingLanguageImg = 'http://blog.expertsoftwareteam.com/wp-content/uploads/2019/01/flutter12.png'
+
+        elif programmingLanguageImg == 'appInventor':
+            programmingLanguageImg = 'https://upload.wikimedia.org/wikipedia/commons/6/64/Mit_app_inventor.png'
+
+        else:
+            programmingLanguageImg = 'https://media.istockphoto.com/vectors/file-vector-icon-isolated-on-white-background-outline-thin-line-file-vector-id1269389575?b=1&k=20&m=1269389575&s=170667a&w=0&h=TVyb9VTl4z4mex17tIjPwKMgUFpDZk_ZvnEN63xybv4='
+
+        libraries = dff.libraries.values[0]
+
+
+
 
     else:
         url_img = "https://plantillasdememes.com/img/plantillas/imagen-no-disponible01601774755.jpg"
@@ -394,7 +493,7 @@ def update_graph(app_selected):
     ),
         id="output_url",
         href=app_url,
-        target="_blank"), style={"width": "35%"}
+        target="_blank"), style={}
 
     )
 
@@ -409,7 +508,28 @@ def update_graph(app_selected):
         params=[app_selected],
         con=dbConnection).to_dict(orient='records')
 
+    reviewsApp = pd.read_sql(
+        "SELECT userName,DATE(date) AS  dateReview,score,text FROM REVIEWS P WHERE appId = %s LIMIT 10",
+        params=[app_selected],
+        con=dbConnection).to_dict(orient='records')
+
     dbConnection.close()
+
+    # Puntuaciones
+
+    for review in reviewsApp:
+        if review['score'] == 1:
+            review['score'] = '⭐'
+        elif review['score'] == 2:
+            review['score'] = '⭐⭐'
+        elif review['score'] == 3:
+            review['score'] = '⭐⭐⭐'
+        elif review['score'] == 4:
+            review['score'] = '⭐⭐⭐⭐'
+        elif review['score'] == 5:
+            review['score'] = '⭐⭐⭐⭐⭐'
+
+    # Permisos
 
     for permit in permitsApp:
         if permit['Location'] == '1':
@@ -477,6 +597,8 @@ def update_graph(app_selected):
         else:
             permit['Identity'] = '✘'
 
-    rows = permitsApp
+    rowsPermit = permitsApp
 
-    return url_img, app_title, app_summary, app_score, app_developer, div_url, app_installs, price, androidVersionText, genre, contentRating, recentChanges, rows
+    rowsReviews = reviewsApp
+
+    return url_img, programmingLanguageImg, libraries, app_title, app_summary, app_score, app_developer, div_url, app_installs, price, androidVersionText, genre, contentRating, released, recentChanges, rowsPermit, reviewsApp
