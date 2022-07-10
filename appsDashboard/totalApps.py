@@ -305,7 +305,7 @@ apps_layout = html.Div([
 
                                         html.Div(id="output_url"
 
-                                                 ))
+                                                 ), style={'font-size': 'xx-large'})
 
                                 ],
 
@@ -456,7 +456,7 @@ def update_graph(app_selected):
         programmingLanguageImg = dff.programmingLanguage.values[0]
 
         if programmingLanguageImg == 'Kotlin':
-            programmingLanguageImg = 'https://static.platzi.com/media/blog/kotlin-d9989db6-1843-478c-87d4-e8250222417e.jpg'
+            programmingLanguageImg = 'https://www.nicepng.com/png/detail/271-2711435_android-apps-development-by-cloudtrains-technologies-kotlin-logo.png'
         elif programmingLanguageImg == 'Java':
             programmingLanguageImg = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSp1rLnnxIth_0GaWjmgbUD0ZygnpBGDAXIDNevsrcrMkSGQRrRU-VvOrIsxlRCkFFL8mo&usqp=CAU'
 
@@ -471,8 +471,8 @@ def update_graph(app_selected):
 
         libraries = dff.libraries.values[0]
 
-
-
+        if libraries is None or libraries == '':
+            libraries = "No disponible"
 
     else:
         url_img = "https://plantillasdememes.com/img/plantillas/imagen-no-disponible01601774755.jpg"
@@ -487,6 +487,7 @@ def update_graph(app_selected):
         genre = "No disponible"
         contentRating = "No disponible"
         recentChanges = "No disponible"
+        libraries = "No disponible"
 
     div_url = html.Div(dcc.Link(DashIconify(
         icon="logos:google-play",

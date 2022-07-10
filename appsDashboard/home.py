@@ -51,14 +51,14 @@ home_layout = html.Div([
                             "key": i['position'],
                             "src": i['icon'],
                             "caption": i['title'],
-                            "img_style": {"max-height": "600px", "max-width": "1400px"},
+                            "img_style": {"max-height": "450px", "max-width": "1300px"},
                             "caption_class_name": 'caption'
                         } for i in top10Free_apps
 
                     ], interval=5000,
                     ride="carousel",
                     className="slider"
-                ), width={'size': 8, "offset": 0, 'order': 1}),
+                ), width={'size': 7, "offset": 0, 'order': 1}),
 
             dbc.Col(
                 dbc.Row(
@@ -81,7 +81,7 @@ home_layout = html.Div([
                             ]), className="cards"
                         ), ])
 
-                , width={'size': 4, "offset": 0, 'order': 2}),
+                , width={'size': 5, "offset": 0, 'order': 2}),
         ]
 
     ),
