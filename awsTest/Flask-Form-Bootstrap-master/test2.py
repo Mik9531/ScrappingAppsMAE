@@ -177,7 +177,7 @@ if __name__ == '__main__':
                                  cursorclass=pymysql.cursors.DictCursor)
     cursor = connection.cursor()
 
-    sql = "SELECT appId,programmingLanguage FROM `APPS` WHERE genreId not LIKE ('%GAME%') AND programmingLanguage is NULL"
+    sql = "SELECT appId,programmingLanguage FROM `APPS` WHERE genreId not LIKE ('%GAME%') AND programmingLanguage is NULL ORDER BY maxInstalls DESC LIMIT 5000"
 
     cursor.execute(sql)
 
@@ -320,7 +320,7 @@ if __name__ == '__main__':
                     print(e)
                     var = None
 
-        if (cont_actual == 100):
+        if (cont_actual == 10):
             # Actualizamos las aplicaciones
             sql = "UPDATE APPS SET programmingLanguage=%s, libraries=%s WHERE appId = %s"
 

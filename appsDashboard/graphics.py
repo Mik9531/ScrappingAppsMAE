@@ -9,7 +9,7 @@ import plotly.express as px
 from dash import dcc, html, Input, Output
 
 from app import app, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, top_apps, \
-    titles_apps_list, contApps
+    titles_apps_list, contApps, contReviews, contTechs
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
@@ -27,19 +27,53 @@ graphics_layout = html.Div([
 
             dbc.Col(
                 [
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                daq.LEDDisplay(
-                                    label="Aplicaciones analizadas",
-                                    value=contApps,
-                                    color="#FF5E5E"
-                                )],
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                dbc.Card(
+                                    dbc.CardBody(
+                                        [
+                                            daq.LEDDisplay(
+                                                label="Aplicaciones analizadas",
+                                                value=contApps,
+                                                color="#FF5E5E"
+                                            )],
 
-                        ),
-                        className="cards"
+                                    ),
+                                    className="cards"
 
-                    ),
+                                ), width={'size': 4, "offset": 0, 'order': 1}
+                            ),
+                            dbc.Col(
+                                dbc.Card(
+                                    dbc.CardBody(
+                                        [
+                                            daq.LEDDisplay(
+                                                label="Reseñas listadas",
+                                                value=contReviews,
+                                                color="#FF5E5E"
+                                            )],
+
+                                    ),
+                                    className="cards"
+
+                                ), width={'size': 4, "offset": 0, 'order': 2}
+                            ),
+                            dbc.Col(
+                                dbc.Card(
+                                    dbc.CardBody(
+                                        [
+                                            daq.LEDDisplay(
+                                                label="Tecnologías obtenidas",
+                                                value=contTechs,
+                                                color="#FF5E5E"
+                                            )],
+
+                                    ),
+                                    className="cards"
+
+                                ), width={'size': 4, "offset": 0, 'order': 3}
+                            )]),
                     dbc.Card(
                         dbc.CardBody(
                             [
@@ -50,6 +84,7 @@ graphics_layout = html.Div([
                                         {'label': 'Tecnologías', 'value': 'programmingLanguage'},
                                         {'label': 'Géneros', 'value': 'genre'},
                                         {'label': 'Precios', 'value': 'price'},
+                                        {'label': 'Instalaciones', 'value': 'installs'},
                                         {'label': 'Clasificaciones', 'value': 'contentRating'},
                                         {'label': 'Contiene Anuncios', 'value': 'adSupported'}
                                     ],
@@ -77,7 +112,7 @@ graphics_layout = html.Div([
 
                 ],
 
-                width={'size': 8, "offset": 0, 'order': 0}
+                width={'size': 12, "offset": 0, 'order': 0}
 
             ),
         ]

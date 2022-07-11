@@ -37,6 +37,18 @@ titles_apps_list = pd.read_sql(
 
 contApps = len(titles_apps)
 
+allReviews = pd.read_sql(
+    "SELECT appId from REVIEWS",
+    sqlEngine).to_dict(orient='records')
+
+contReviews = len(allReviews)
+
+allTechs = pd.read_sql(
+    "SELECT appId from APPS WHERE programmingLanguage IS NOT NULL",
+    sqlEngine).to_dict(orient='records')
+
+contTechs = len(allTechs)
+
 # APLICACIONES
 
 top_apps = pd.read_sql(
