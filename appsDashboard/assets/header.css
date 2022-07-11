@@ -81,6 +81,10 @@ body {
     font-size: 30px;
 }
 
+.carousel-indicators {
+    background-color: currentcolor;
+}
+
 .index-tabs {
     flex-wrap: wrap;
     justify-content: center;

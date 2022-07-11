@@ -46,7 +46,8 @@ top_maps_layout = html.Div([
                                          {"label": i['title'], "value": i['appId']} for i in titles_apps],
                                      multi=False,
                                      value=None,
-                                     style={'width': "100%"}
+                                     style={'width': "100%"},
+                                     placeholder="Selecciona..."
                                      ),
 
                     ]
