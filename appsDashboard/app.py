@@ -49,12 +49,6 @@ allTechs = pd.read_sql(
 
 contTechs = len(allTechs)
 
-# APLICACIONES
-
-top_apps = pd.read_sql(
-    "SELECT A.title,A.icon, TA.position, A.summary, TA.appId from TOP_FREE TA INNER JOIN APPS A ON (A.appId = TA.appId) ORDER BY TA.created DESC LIMIT 50",
-    sqlEngine)
-
 # HOME
 
 # Seleccionamos la fecha inicial de la base de datos (y fecha mínima a poder seleccionar)
@@ -72,6 +66,18 @@ top10Free_apps = pd.read_sql(
     "SELECT  TF.position, A.title, A.url, A.icon, A.created FROM `TOP_FREE` TF INNER JOIN APPS A ON A.appId = TF.appId WHERE country = 'USA' AND TF.CREATED = %s GROUP BY TF.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine).to_dict(orient='records')
+
+# APLICACIONES
+
+top10Paid_apps = pd.read_sql(
+    "SELECT  TP.position, A.title, A.url, A.icon, A.created, A.summary FROM `TOP_PAID` TP INNER JOIN APPS A ON A.appId = TP.appId WHERE country = 'USA' AND TP.CREATED = %s GROUP BY TP.appId ORDER BY POSITION LIMIT 10",
+    params=[last_date_day],
+    con=sqlEngine)
+
+top10Grossing_apps = pd.read_sql(
+    "SELECT  TG.position, A.title, A.url, A.icon, A.created, A.summary FROM `GROSSING` TG INNER JOIN APPS A ON A.appId = TG.appId WHERE country = 'USA' AND TG.CREATED = %s GROUP BY TG.appId ORDER BY POSITION LIMIT 10",
+    params=[last_date_day],
+    con=sqlEngine)
 
 dbConnection.close()
 

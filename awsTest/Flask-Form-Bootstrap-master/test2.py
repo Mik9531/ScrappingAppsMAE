@@ -240,7 +240,7 @@ if __name__ == '__main__':
                             app_details['programmingLanguage'] = 'Java'
 
                         if (len(files_apk) == 0):
-                            app_details['programmingLanguage'] = ''
+                            app_details['programmingLanguage'] = None
 
                         # Obtenemos las librerías externas usadas
                         libraries = []

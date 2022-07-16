@@ -8,7 +8,7 @@ import plotly.express as px
 
 from dash import dcc, html, Input, Output
 
-from app import app, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, top_apps, \
+from app import app, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, top_paid_apps, \
     titles_apps_list, contApps, contReviews, contTechs
 
 init_date = init_date['created'].values[0]
