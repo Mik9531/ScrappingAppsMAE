@@ -33,7 +33,7 @@ for i in range(cont_list_top_paid_apps):
                                     className="card-text",
                                 ),
                                 html.Small(
-                                    "Puesto #" + str(top10Paid_apps['position'].values[i]),
+                                    "Puntuación " + '%s ⭐' % str(top10Paid_apps['score'].values[i]),
                                     className="card-text text-muted",
                                 ),
                             ]
@@ -67,7 +67,7 @@ for i in range(cont_list_top_grossing_apps):
                                     className="card-text",
                                 ),
                                 html.Small(
-                                    "Puesto #" + str(top10Grossing_apps['position'].values[i]),
+                                    "Puntuación " + '%s ⭐' % str(top10Grossing_apps['score'].values[i]),
                                     className="card-text text-muted",
                                 ),
                             ]
@@ -80,6 +80,29 @@ for i in range(cont_list_top_grossing_apps):
     ))
 
 home_layout = html.Div([
+
+    dbc.Row(
+
+        dbc.Card(
+            dbc.CardBody([
+                html.H3("¡Bienvenido a los resultados del scraping!", style={'textAlign': 'left'}),
+                dcc.Markdown(
+                    "En esta aplicación web encontrarás todos los resultados del scraping realizado "
+                    "sobre las aplicaciones de Google Play, incluidos sus permisos, reseñas, "
+                    "tecnologías o disposición en el mundo entre otras características."),
+                dcc.Markdown(
+                    "Construido con [Python](https://www.python.org/) y [Dash](https://plotly.com/dash/), esta aplicación provee al usuario un análisis en "
+                    "profundidad de datos que no podemos obtener en la plataforma de aplicaciones "
+                    "Android por defecto, Google Play"),
+
+                dcc.Markdown(
+                    "Última fecha de actualización: "),
+
+                html.Div(id='date_home', children=[]),
+            ]), className="cards"
+        ),
+
+    ),
 
     dbc.Row(
         [

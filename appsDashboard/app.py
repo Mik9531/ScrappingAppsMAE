@@ -1,7 +1,10 @@
 # coding=utf8
-import dash
-import dash_bootstrap_components as dbc
 from sqlalchemy import create_engine
+
+import dash
+
+import dash_bootstrap_components as dbc
+
 import pandas as pd
 
 # Importamos los datos desde nuestro mysql
@@ -25,14 +28,14 @@ top_free_apps = pd.read_sql(
 top_paid_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_PAID TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId)  LIMIT 10", con=dbConnection)
+    "TG.appId) LIMIT 10", con=dbConnection)
 
 titles_apps = pd.read_sql(
-    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC LIMIT 1000",
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC",
     sqlEngine).to_dict(orient='records')
 
 titles_apps_list = pd.read_sql(
-    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC LIMIT 1000"
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC"
     , con=dbConnection)
 
 contApps = len(titles_apps)
@@ -44,7 +47,7 @@ allReviews = pd.read_sql(
 contReviews = len(allReviews)
 
 allTechs = pd.read_sql(
-    "SELECT appId from APPS WHERE programmingLanguage IS NOT NULL",
+    "SELECT appId from APPS WHERE programmingLanguage IS NOT NULL AND programmingLanguage != ''",
     sqlEngine).to_dict(orient='records')
 
 contTechs = len(allTechs)
@@ -70,19 +73,19 @@ top10Free_apps = pd.read_sql(
 # APLICACIONES
 
 top10Paid_apps = pd.read_sql(
-    "SELECT  TP.position, A.title, A.url, A.icon, A.created, A.summary FROM `TOP_PAID` TP INNER JOIN APPS A ON A.appId = TP.appId WHERE country = 'USA' AND TP.CREATED = %s GROUP BY TP.appId ORDER BY POSITION LIMIT 10",
+    "SELECT  TP.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `TOP_PAID` TP INNER JOIN APPS A ON A.appId = TP.appId WHERE country = 'USA' AND TP.CREATED = %s GROUP BY TP.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine)
 
 top10Grossing_apps = pd.read_sql(
-    "SELECT  TG.position, A.title, A.url, A.icon, A.created, A.summary FROM `GROSSING` TG INNER JOIN APPS A ON A.appId = TG.appId WHERE country = 'USA' AND TG.CREATED = %s GROUP BY TG.appId ORDER BY POSITION LIMIT 10",
+    "SELECT  TG.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `GROSSING` TG INNER JOIN APPS A ON A.appId = TG.appId WHERE country = 'USA' AND TG.CREATED = %s GROUP BY TG.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine)
 
 dbConnection.close()
 
 app = dash.Dash(__name__, suppress_callback_exceptions=True,
-                external_stylesheets=[dbc.themes.LUX, dbc.icons.FONT_AWESOME],
+                external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
                 meta_tags=[{'name': 'viewport',
                             'content': 'width=device-width, initial-scale=1'}]
                 )

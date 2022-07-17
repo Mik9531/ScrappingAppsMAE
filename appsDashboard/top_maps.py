@@ -43,7 +43,7 @@ top_maps_layout = html.Div([
                                style={'padding-bottom': '15px', 'box-sizing': 'inherit', "margin-top": "15px"}),
                         dcc.Dropdown(id="slct_app",
                                      options=[
-                                         {"label": i['title'], "value": i['appId']} for i in titles_apps],
+                                         {"label": str(i['title']), "value": i['appId']} for i in titles_apps],
                                      multi=False,
                                      value=None,
                                      style={'width': "100%"},

@@ -36,7 +36,8 @@ apps_layout = html.Div([
                                            style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
                                     dcc.Dropdown(id="slct_app",
                                                  options=[
-                                                     {"label": i['title'], "value": i['appId']} for i in titles_apps],
+                                                     {"label": str(i['title']), "value": i['appId']} for i in
+                                                     titles_apps],
                                                  multi=False,
                                                  value='com.instagram.android',
                                                  optionHeight=40,

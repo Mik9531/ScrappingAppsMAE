@@ -12,49 +12,81 @@ from dash_iconify import DashIconify
 # ------------------------------------------------------------------------------
 
 # Enlaces
-link_tabs_layout = html.Div([
-    dbc.Row([
-        dbc.Col(dcc.Link('Home', href='/', className="a-tabs"), className="col-tab"),
-        dbc.Col(dcc.Link('Aplicaciones', href='/apps', className="a-tabs"), className="col-tab"),
-        dbc.Col(dcc.Link('Mapas Aplicaciones', href='/top-maps', className="a-tabs"), className="col-tab"),
-        dbc.Col(dcc.Link('Gráficos', href='/graphics', className="a-tabs"), className="col-tab"),
-    ], className="index-tabs"
-    )
-])
+# link_tabs_layout = html.Div([
+#     dbc.Row([
+#         dbc.Col(dcc.Link('Home', href='/', className="a-tabs"), className="col-tab"),
+#         dbc.Col(dcc.Link('Aplicaciones', href='/apps', className="a-tabs"), className="col-tab"),
+#         dbc.Col(dcc.Link('Mapas Aplicaciones', href='/top-maps', className="a-tabs"), className="col-tab"),
+#         dbc.Col(dcc.Link('Gráficos', href='/graphics', className="a-tabs"), className="col-tab"),
+#     ], className="index-tabs"
+#     )
+# ])
 
 server = app.server
 
 # Layout
-app.layout = html.Div([
-    dbc.Row(
-        [
+app.layout = html.Div(
+    [
+        dcc.Location(id='url', refresh=False),
 
-            dbc.Col(dbc.Card(
-                dbc.CardBody(
-                    dbc.Row(
-                        [
-                            dbc.Col(DashIconify(
-                                icon="carbon:dashboard",
-                                width=40, flip="horizontal"
-                            ), width=1),
-                            dbc.Col(html.H5("Google Play Scraping Dashboard"),
-                                    className="top-title"),
-                            dbc.Col(link_tabs_layout, width=4),
-                        ]
-                    ), className="top-bar"
-                ),
+        dbc.Navbar(
+            children=[
+                dbc.Container(
+                    [
+                        html.A(
+                            dbc.Row(
+                                dbc.Col(DashIconify(
+                                    icon="carbon:dashboard",
+                                    width=50, flip="horizontal"
+                                    , className="ms-2")),
+                                align="center",
+                                className="g-0",
+                            ),
+                            href="/",
+                            style={"textDecoration": "none"},
+                            className="w-50",
 
-            ),
-                width={'size': 12, "offset": 0, 'order': 1}
-            ),
-        ]
-    ),
+                        ),
+                        html.A(
+                            dbc.Row(
+                                dbc.Col(dbc.NavbarBrand("Google Play Scraping Dashboard", className="ms-2")),
+                                align="center",
+                                className="g-0",
+                            ),
+                            href="/",
+                            style={"textDecoration": "none"},
+                            className="w-50",
 
-    dcc.Location(id='url', refresh=False),
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.NavbarToggler(id="navbar-toggler"),
+                                dbc.Collapse(
+                                    dbc.Nav(
+                                        [
+                                            dbc.NavItem(dbc.NavLink("Home", href="/")),
+                                            dbc.NavItem(dbc.NavLink("Aplicaciones", href="/apps")),
+                                            dbc.NavItem(dbc.NavLink("Mapas", href="/top-maps")),
+                                            dbc.NavItem(dbc.NavLink("Gráficas", href="/graphics")),
+                                        ],
+                                    ),
+                                    id="navbar-collapse",
+                                    is_open=False,
+                                    navbar=True,
+                                ),
+                            ],
+                            className="flex-grow-1",
+                        ),
+                    ],
+                    fluid=True,
+                )],
+            dark=True,
+            color="dark",
+        ),
 
-    html.Div(id='page-content', className="page-content")
+        html.Div(id='page-content', className="page-content"),
 
-])
+    ])
 
 
 @app.callback(
