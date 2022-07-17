@@ -18,17 +18,17 @@ dbConnection = sqlEngine.connect()
 top_grossing_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from GROSSING TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId) LIMIT 10", con=dbConnection)
+    "TG.appId)", con=dbConnection)
 
 top_free_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_FREE TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId) LIMIT 10", con=dbConnection)
+    "TG.appId)", con=dbConnection)
 
 top_paid_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_PAID TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId) LIMIT 10", con=dbConnection)
+    "TG.appId)", con=dbConnection)
 
 titles_apps = pd.read_sql(
     "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC",

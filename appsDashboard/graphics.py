@@ -83,8 +83,6 @@ graphics_layout = html.Div([
                                     options=[
                                         {'label': 'Tecnologías', 'value': 'programmingLanguage'},
                                         {'label': 'Géneros', 'value': 'genre'},
-                                        {'label': 'Precios', 'value': 'price'},
-                                        {'label': 'Instalaciones', 'value': 'installs'},
                                         {'label': 'Clasificaciones', 'value': 'contentRating'},
                                         {'label': 'Contiene Anuncios', 'value': 'adSupported'}
                                     ],
