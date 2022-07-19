@@ -491,7 +491,7 @@ def my_link():
                                                     app_details['programmingLanguage'] = 'Java'
 
                                                 if (len(files_apk) == 0):
-                                                    app_details['programmingLanguage'] = ''
+                                                    app_details['programmingLanguage'] = None
 
                                                 # Obtenemos las librerías externas usadas
                                                 libraries = []
@@ -683,7 +683,7 @@ def my_link():
                           "free=VALUES(free), " \
                           "url=VALUES(url), icon=VALUES(icon) , description=VALUES(description), installs=VALUES(installs), ratings=VALUES(ratings)," \
                           "reviews=VALUES(reviews), androidVersionText=VALUES(androidVersionText), genre=VALUES(genre), genreId=VALUES(genreId),adSupported=VALUES(adSupported),recentChanges=VALUES(recentChanges)," \
-                          "released=VALUES(released), contentRating=VALUES(contentRating), programmingLanguage=VALUES(programmingLanguage), libraries=VALUES(libraries)"
+                          "released=VALUES(released), contentRating=VALUES(contentRating)"
 
                     val = total_apps
                     cursor.executemany(sql, val)

@@ -11,7 +11,7 @@ WORKDIR /home/dashboard
 COPY assets /home/dashboard/assets
 
 
-COPY index.py app.py boot.sh home.py listado_apks.py top_maps.py requirements.txt ./
+COPY index.py app.py boot.sh home.py graphics.py totalApps.py top_maps.py requirements.txt ./
 RUN chmod +x boot.sh
 
 
@@ -19,14 +19,13 @@ RUN chmod +x boot.sh
 RUN pip install dash-iconify==0.1.2
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
+RUN pip install dash-daq
 
 
-ENV PORT 5000
+ENV PORT 8080
 
+EXPOSE 8080
 
-
-EXPOSE 5000
-
-CMD gunicorn -w 4 -b 0.0.0.0:5000 index:server
+CMD gunicorn -w 4 -b 0.0.0.0:8080 index:server
 
 
