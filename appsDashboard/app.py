@@ -58,7 +58,7 @@ contTechs = len(allTechs)
 init_date = pd.read_sql(
     "SELECT TF.created from TOP_FREE TF WHERE country = 'USA' ORDER BY TF.created ASC LIMIT 1", sqlEngine)
 
-# Seleccionamos la fecha actual (y fecha máxima a poder seleccionar)
+# Seleccionamos la fecha actual (y fecha máxima a seleccionar)
 
 last_date = pd.read_sql(
     "SELECT TF.created from TOP_FREE TF WHERE country = 'USA' ORDER BY TF.created DESC LIMIT 1", sqlEngine)
