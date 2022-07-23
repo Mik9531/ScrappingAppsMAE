@@ -5,6 +5,7 @@ from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 from top_maps import top_maps_layout
 from graphics import graphics_layout
+from userApp import user_app_layout
 from home import home_layout
 from totalApps import apps_layout
 from dash_iconify import DashIconify
@@ -68,6 +69,7 @@ app.layout = html.Div(
                                             dbc.NavItem(dbc.NavLink("Aplicaciones", href="/apps")),
                                             dbc.NavItem(dbc.NavLink("Mapas", href="/top-maps")),
                                             dbc.NavItem(dbc.NavLink("Gráficas", href="/graphics")),
+                                            dbc.NavItem(dbc.NavLink("Añadir", href="/userApp")),
                                         ],
                                     ),
                                     id="navbar-collapse",
@@ -103,6 +105,8 @@ def switch_tab(pathname):
         return apps_layout
     elif pathname == '/graphics':
         return graphics_layout
+    elif pathname == '/userApp':
+        return user_app_layout
 
 
 if __name__ == '__main__':

@@ -13,41 +13,43 @@ sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us
 
 dbConnection = sqlEngine.connect()
 
+limit_table = " LIMIT 15"
+
 # MAPAS
 
 top_grossing_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from GROSSING TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId)", con=dbConnection)
+    "TG.appId)" + limit_table, con=dbConnection)
 
 top_free_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_FREE TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId)", con=dbConnection)
+    "TG.appId)" + limit_table, con=dbConnection)
 
 top_paid_apps = pd.read_sql(
     "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_PAID TG INNER JOIN APPS A ON (A.appId "
     "= "
-    "TG.appId)", con=dbConnection)
+    "TG.appId)" + limit_table, con=dbConnection)
 
 titles_apps = pd.read_sql(
-    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC",
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table,
     sqlEngine).to_dict(orient='records')
 
 titles_apps_list = pd.read_sql(
-    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC"
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table
     , con=dbConnection)
 
 contApps = len(titles_apps)
 
 allReviews = pd.read_sql(
-    "SELECT appId from REVIEWS",
+    "SELECT appId from REVIEWS" + limit_table,
     sqlEngine).to_dict(orient='records')
 
 contReviews = len(allReviews)
 
 allTechs = pd.read_sql(
-    "SELECT appId from APPS WHERE programmingLanguage IS NOT NULL AND programmingLanguage != ''",
+    "SELECT appId from APPS WHERE programmingLanguage IS NOT NULL AND programmingLanguage != ''" + limit_table,
     sqlEngine).to_dict(orient='records')
 
 contTechs = len(allTechs)
