@@ -86,8 +86,8 @@ top10Grossing_apps = pd.read_sql(
 
 dbConnection.close()
 
-app = dash.Dash(__name__, suppress_callback_exceptions=True,
-                external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
-                meta_tags=[{'name': 'viewport',
+application = dash.Dash(__name__, suppress_callback_exceptions=True,
+                        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
+                        meta_tags=[{'name': 'viewport',
                             'content': 'width=device-width, initial-scale=1'}]
-                )
+                        )

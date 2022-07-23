@@ -1,6 +1,6 @@
 # coding=utf8
 
-from app import app
+from app import application
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 from top_maps import top_maps_layout
@@ -23,10 +23,10 @@ from dash_iconify import DashIconify
 #     )
 # ])
 
-server = app.server
+server = application.server
 
 # Layout
-app.layout = html.Div(
+application.layout = html.Div(
     [
         dcc.Location(id='url', refresh=False),
 
@@ -91,7 +91,7 @@ app.layout = html.Div(
     ])
 
 
-@app.callback(
+@application.callback(
     Output("page-content", "children"),
     Input('url', 'pathname')
 )
@@ -110,4 +110,4 @@ def switch_tab(pathname):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0', port=8080, threaded=True, dev_tools_hot_reload=True)
+    application.run_server(debug=True, host='0.0.0.0', port=8080, threaded=True, dev_tools_hot_reload=True)

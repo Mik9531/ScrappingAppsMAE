@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 from dash import dcc, html, Input, Output
 
-from app import app, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, top_paid_apps, \
+from app import application, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, top_paid_apps, \
     titles_apps_list, contApps, contReviews, contTechs
 
 init_date = init_date['created'].values[0]
@@ -119,7 +119,7 @@ graphics_layout = html.Div([
 
 # ------------------------------------------------------------------------------
 # Conectamos los graficos Plotly con los componentes Dash
-@app.callback(
+@application.callback(
 
     Output(component_id='figurePie', component_property='figure'),
     [Input(component_id='fieldDropdown', component_property='value')]

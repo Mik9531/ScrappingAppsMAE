@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dash import dcc, html, Input, Output
 
-from app import app, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps
+from app import application, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
@@ -100,7 +100,7 @@ top_maps_layout = html.Div([
 
 # ------------------------------------------------------------------------------
 # Conectamos los graficos Plotly con los componentes Dash
-@app.callback(
+@application.callback(
 
     [Output(component_id='figureFree', component_property='figure'),
      Output(component_id='figurePaid', component_property='figure'),

@@ -7,7 +7,7 @@ from dash import dash_table
 import plotly.graph_objects as go
 from dash import dcc, html, Input, Output
 
-from app import app, last_date, init_date, titles_apps, top_grossing_apps, titles_apps_list
+from app import application, last_date, init_date, titles_apps, top_grossing_apps, titles_apps_list
 from dash_iconify import DashIconify
 import pandas as pd
 from collections import OrderedDict
@@ -398,7 +398,7 @@ apps_layout = html.Div([
 
 # ------------------------------------------------------------------------------
 # Conectamos los graficos Plotly con los componentes Dash
-@app.callback(
+@application.callback(
 
     [Output('output_img', 'src'),
      Output('output_tech_img', 'src'),
