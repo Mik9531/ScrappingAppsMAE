@@ -19,9 +19,6 @@ apps_layout = html.Div([
 
     dbc.Row(
         [
-            dbc.Row(
-                html.Button('Recargar listado de aplicaciones', id='submit-val', n_clicks=0),
-            ),
 
             dbc.Col(
                 dbc.Row(
@@ -417,41 +414,21 @@ apps_layout = html.Div([
      Output('rowsReviews', 'data'),
      Output('slct_app', 'options')
      ],
-    [Input(component_id='slct_app', component_property='value'), Input('submit-val', 'n_clicks'), ]
+    Input(component_id='slct_app', component_property='value')
 )
-def update_graph(app_selected, value):
+def update_graph(app_selected):
     global rowsPermit
     global rowsTitles
 
-    # from app import titles_apps
+    from app import limit
 
-    if value > 0:
+    titles_apps = limit()
 
-        limit_table = ""
+    titles_apps_drop = [
+        {"label": str(i['title']), "value": i['appId']} for i in
+        titles_apps]
 
-        sqlEngine = create_engine(
-            'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
-
-        dbConnection = sqlEngine.connect()
-
-        titles_apps_data = pd.read_sql(
-            "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table,
-            sqlEngine).to_dict(orient='records')
-
-        titles_apps_drop = [
-            {"label": str(i['title']), "value": i['appId']} for i in
-            titles_apps_data]
-
-        titles_apps_list_data = pd.read_sql(
-            "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table
-            , con=dbConnection)
-
-    else:
-        titles_apps_drop = [
-            {"label": str(i['title']), "value": i['appId']} for i in
-            titles_apps]
-
-        titles_apps_list_data = titles_apps_list
+    titles_apps_list_data = titles_apps_list
 
     dff = titles_apps_list_data.copy()
 

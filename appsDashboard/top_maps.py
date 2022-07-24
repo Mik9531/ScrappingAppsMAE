@@ -41,7 +41,7 @@ top_maps_layout = html.Div([
 
                         html.P("Selecciona la aplicación:", className="card-title",
                                style={'padding-bottom': '15px', 'box-sizing': 'inherit', "margin-top": "15px"}),
-                        dcc.Dropdown(id="slct_app",
+                        dcc.Dropdown(id="slct_app_drop",
                                      options=[
                                          {"label": str(i['title']), "value": i['appId']} for i in titles_apps],
                                      multi=False,
@@ -106,7 +106,7 @@ top_maps_layout = html.Div([
      Output(component_id='figurePaid', component_property='figure'),
      Output(component_id='figureGrossing', component_property='figure')],
     [Input(component_id='slct_year', component_property='date'),
-     Input(component_id='slct_app', component_property='value')]
+     Input(component_id='slct_app_drop', component_property='value')]
 )
 def update_graph(date_selected, app_selected):
     date_selected = datetime.strptime(date_selected, '%Y-%m-%d')

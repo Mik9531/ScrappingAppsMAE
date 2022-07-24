@@ -15,6 +15,13 @@ dbConnection = sqlEngine.connect()
 
 limit_table = " LIMIT 15"
 
+
+def limit():
+    return pd.read_sql(
+        "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table,
+        sqlEngine).to_dict(orient='records')
+
+
 # MAPAS
 
 top_grossing_apps = pd.read_sql(
@@ -32,9 +39,7 @@ top_paid_apps = pd.read_sql(
     "= "
     "TG.appId)" + limit_table, con=dbConnection)
 
-titles_apps = pd.read_sql(
-    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table,
-    sqlEngine).to_dict(orient='records')
+titles_apps = limit()
 
 titles_apps_list = pd.read_sql(
     "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table

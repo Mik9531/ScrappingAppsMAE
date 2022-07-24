@@ -34,7 +34,7 @@ user_app_layout = html.Div([
             html.Br(),
 
             dbc.Row(
-                html.Button('Submit', id='submit-val', n_clicks=0),
+                html.Button('Añadir', id='submit-val', n_clicks=0),
 
                 style={"textAlign": "center"},
             ),
