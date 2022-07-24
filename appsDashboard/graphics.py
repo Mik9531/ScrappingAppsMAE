@@ -2,7 +2,7 @@
 
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-import plotly.express as px
+# import plotly.express as px
 
 from dash import dcc, html, Input, Output
 

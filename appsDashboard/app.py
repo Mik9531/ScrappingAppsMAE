@@ -13,7 +13,7 @@ sqlEngine = create_engine('mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us
 
 dbConnection = sqlEngine.connect()
 
-limit_table = " LIMIT 15"
+limit_table = ""
 
 
 def limit():
