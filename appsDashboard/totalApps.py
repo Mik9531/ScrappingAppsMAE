@@ -1,17 +1,13 @@
 # coding=utf8
-from datetime import date
-from datetime import datetime
 
 import dash_bootstrap_components as dbc
-from dash import dash_table
-import plotly.graph_objects as go
-from dash import dcc, html, Input, Output
-
-from app import application, last_date, init_date, titles_apps, top_grossing_apps, titles_apps_list
-from dash_iconify import DashIconify
 import pandas as pd
-from collections import OrderedDict
+from dash import dash_table
+from dash import dcc, html, Input, Output
+from dash_iconify import DashIconify
 from sqlalchemy import create_engine
+
+from app import application, last_date, init_date, titles_apps, titles_apps_list
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
@@ -23,6 +19,9 @@ apps_layout = html.Div([
 
     dbc.Row(
         [
+            dbc.Row(
+                html.Button('Recargar listado de aplicaciones', id='submit-val', n_clicks=0),
+            ),
 
             dbc.Col(
                 dbc.Row(
@@ -35,15 +34,14 @@ apps_layout = html.Div([
                                     html.P("Selecciona la aplicación:", className="card-title",
                                            style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
                                     dcc.Dropdown(id="slct_app",
-                                                 options=[
-                                                     {"label": str(i['title']), "value": i['appId']} for i in
-                                                     titles_apps],
+
                                                  multi=False,
                                                  value='com.instagram.android',
                                                  optionHeight=40,
                                                  placeholder='Selecciona...',
                                                  clearable=False,
                                                  style={'width': "100%"}
+
                                                  ),
 
                                 ]
@@ -416,13 +414,46 @@ apps_layout = html.Div([
      Output('output_released', 'children'),
      Output('output_recentChanges', 'children'),
      Output('rowsPermit', 'data'),
-     Output('rowsReviews', 'data')
+     Output('rowsReviews', 'data'),
+     Output('slct_app', 'options')
      ],
-    Input(component_id='slct_app', component_property='value')
+    [Input(component_id='slct_app', component_property='value'), Input('submit-val', 'n_clicks'), ]
 )
-def update_graph(app_selected):
+def update_graph(app_selected, value):
     global rowsPermit
-    dff = titles_apps_list.copy()
+    global rowsTitles
+
+    # from app import titles_apps
+
+    if value > 0:
+
+        limit_table = ""
+
+        sqlEngine = create_engine(
+            'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
+
+        dbConnection = sqlEngine.connect()
+
+        titles_apps_data = pd.read_sql(
+            "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table,
+            sqlEngine).to_dict(orient='records')
+
+        titles_apps_drop = [
+            {"label": str(i['title']), "value": i['appId']} for i in
+            titles_apps_data]
+
+        titles_apps_list_data = pd.read_sql(
+            "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table
+            , con=dbConnection)
+
+    else:
+        titles_apps_drop = [
+            {"label": str(i['title']), "value": i['appId']} for i in
+            titles_apps]
+
+        titles_apps_list_data = titles_apps_list
+
+    dff = titles_apps_list_data.copy()
 
     if app_selected is None:
         dff = dff[dff.appId == 'com.instagram.android']  # Aplicación más descargada
@@ -603,4 +634,4 @@ def update_graph(app_selected):
 
     rowsReviews = reviewsApp
 
-    return url_img, programmingLanguageImg, libraries, app_title, app_summary, app_score, app_developer, div_url, app_installs, price, androidVersionText, genre, contentRating, released, recentChanges, rowsPermit, reviewsApp
+    return url_img, programmingLanguageImg, libraries, app_title, app_summary, app_score, app_developer, div_url, app_installs, price, androidVersionText, genre, contentRating, released, recentChanges, rowsPermit, reviewsApp, titles_apps_drop

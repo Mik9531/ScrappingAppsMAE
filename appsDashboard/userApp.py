@@ -60,7 +60,6 @@ user_app_layout = html.Div([
 
 )
 def update_output(n_clicks, value):
-    test = 123
 
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
