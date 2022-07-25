@@ -1,12 +1,14 @@
 # coding=utf8
 
 import dash_bootstrap_components as dbc
+import pandas as pd
 import plotly.graph_objects as go
-# import plotly.express as px
+import plotly.express as px
 
 from dash import dcc, html, Input, Output
 
-from app import application, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, top_paid_apps, \
+from app import application, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, \
+    top_paid_apps, \
     titles_apps_list, contApps, contReviews, contTechs
 
 init_date = init_date['created'].values[0]
@@ -88,7 +90,15 @@ graphics_layout = html.Div([
                                     multi=False,
                                     clearable=False,
                                     style={"width": "100%"}
-                                )],
+                                ),
+                                dcc.Loading(
+                                    id="loading-3",
+                                    type="default",
+                                    children=html.Div(id="loading-output-graphics"),
+                                    fullscreen=True
+
+                                ),
+                            ],
 
                         ),
                         className="cards"
@@ -121,13 +131,22 @@ graphics_layout = html.Div([
 # Conectamos los graficos Plotly con los componentes Dash
 @application.callback(
 
-    Output(component_id='figurePie', component_property='figure'),
+    [Output(component_id='figurePie', component_property='figure'),
+     Output('loading-output-graphics', 'children')],
+
     [Input(component_id='fieldDropdown', component_property='value')]
 )
 def update_graph(fieldDropdown):
+    from app import limit
+
+    titles_apps = limit()
+
     dffPie = titles_apps.copy()
 
+    dffPie = [i for i in dffPie if i['programmingLanguage'] is not None and i['programmingLanguage'] != '']
+
     for app in dffPie:
+
         if app['genreId'] is not None:
             if 'GAME' in app['genreId']:
                 app['genre'] = 'Juego'
@@ -149,4 +168,6 @@ def update_graph(fieldDropdown):
 
     figPie = go.Figure(figPie)
 
-    return figPie
+    loading = ''
+
+    return figPie, loading

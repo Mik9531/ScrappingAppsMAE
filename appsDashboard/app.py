@@ -54,7 +54,7 @@ allReviews = pd.read_sql(
 contReviews = len(allReviews)
 
 allTechs = pd.read_sql(
-    "SELECT appId from APPS WHERE programmingLanguage IS NOT NULL AND programmingLanguage != ''" + limit_table,
+    "SELECT appId,programmingLanguage from APPS WHERE programmingLanguage != 'None' AND programmingLanguage != '' " + limit_table,
     sqlEngine).to_dict(orient='records')
 
 contTechs = len(allTechs)

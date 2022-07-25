@@ -43,6 +43,13 @@ apps_layout = html.Div([
                                                  style={'width': "100%"}
 
                                                  ),
+                                    dcc.Loading(
+                                        id="loading-1",
+                                        type="default",
+                                        children=html.Div(id="loading-output-apps"),
+                                        fullscreen=True
+
+                                    ),
 
                                 ]
                             ),
@@ -398,6 +405,13 @@ apps_layout = html.Div([
 # Conectamos los graficos Plotly con los componentes Dash
 @application.callback(
 
+)
+def test():
+    test = '123'
+
+
+@application.callback(
+
     [Output('output_img', 'src'),
      Output('output_tech_img', 'src'),
      Output('libraries', 'children'),
@@ -415,17 +429,17 @@ apps_layout = html.Div([
      Output('output_recentChanges', 'children'),
      Output('rowsPermit', 'data'),
      Output('rowsReviews', 'data'),
-     Output('slct_app', 'options')
+     Output('slct_app', 'options'),
+     Output('loading-output-apps', 'children')
      ],
-    Input(component_id='slct_app', component_property='value')
+    Input(component_id='slct_app', component_property='value'),
+
 )
 def update_graph(app_selected):
     global rowsPermit
     global rowsTitles
 
-    from app import limit
-
-    titles_apps = limit()
+    from index import titles_apps
 
     titles_apps_drop = [
         {"label": str(i['title']), "value": i['appId']} for i in
@@ -614,4 +628,6 @@ def update_graph(app_selected):
 
     rowsReviews = reviewsApp
 
-    return url_img, programmingLanguageImg, libraries, app_title, app_summary, app_score, app_developer, div_url, app_installs, price, androidVersionText, genre, contentRating, released, recentChanges, rowsPermit, reviewsApp, titles_apps_drop
+    loading = ''
+
+    return url_img, programmingLanguageImg, libraries, app_title, app_summary, app_score, app_developer, div_url, app_installs, price, androidVersionText, genre, contentRating, released, recentChanges, rowsPermit, reviewsApp, titles_apps_drop, loading

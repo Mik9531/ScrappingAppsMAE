@@ -10,6 +10,8 @@ from home import home_layout
 from totalApps import apps_layout
 from dash_iconify import DashIconify
 
+titles_apps = []
+
 # ------------------------------------------------------------------------------
 
 # Enlaces

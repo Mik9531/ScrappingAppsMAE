@@ -38,6 +38,13 @@ top_maps_layout = html.Div([
                             display_format='DD/MM/YYYY',
                             style={'margin': 'auto'}
                         ),
+                        dcc.Loading(
+                            id="loading-2",
+                            type="default",
+                            children=html.Div(id="loading-output-maps"),
+                            fullscreen=True
+
+                        ),
 
                         html.P("Selecciona la aplicación:", className="card-title",
                                style={'padding-bottom': '15px', 'box-sizing': 'inherit', "margin-top": "15px"}),
@@ -104,7 +111,9 @@ top_maps_layout = html.Div([
 
     [Output(component_id='figureFree', component_property='figure'),
      Output(component_id='figurePaid', component_property='figure'),
-     Output(component_id='figureGrossing', component_property='figure')],
+     Output(component_id='figureGrossing', component_property='figure'),
+     Output('loading-output-maps', 'children')
+     ],
     [Input(component_id='slct_year', component_property='date'),
      Input(component_id='slct_app_drop', component_property='value')]
 )
@@ -231,5 +240,6 @@ def update_graph(date_selected, app_selected):
             showarrow=False
         )]
     )
+    loading = ''
 
-    return figFree, figPaid, figGrossing
+    return figFree, figPaid, figGrossing, loading
