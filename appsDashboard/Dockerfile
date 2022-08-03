@@ -1,10 +1,7 @@
-# Dockerfile, Image, Container
-
 FROM python:3.10
 
 
 
-# Copy local code to the container image.
 RUN mkdir -p /home/dashboard
 WORKDIR /home/dashboard
 

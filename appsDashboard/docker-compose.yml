@@ -4,7 +4,7 @@ services:
     build: .
 
     ports:
-      - "8080:8080"  # I want to set port defined in the env file
+      - "8080:8080"
     volumes:
       - .:/server
     restart: always

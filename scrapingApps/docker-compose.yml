@@ -4,7 +4,7 @@ services:
     build: .
 
     ports:
-      - "5000:5000"  # I want to set port defined in the env file
+      - "5000:5000"
     volumes:
       - .:/server
     restart: always
