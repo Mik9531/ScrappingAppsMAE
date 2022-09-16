@@ -19,7 +19,6 @@ RUN pip install gunicorn flask
 RUN pip install google-play-scraper
 
 
-# Copy local code to the container image.
 RUN mkdir -p /home/flask_app/listadoApks
 WORKDIR /home/flask_app/listadoApks
 
