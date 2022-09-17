@@ -403,12 +403,6 @@ apps_layout = html.Div([
 
 # ------------------------------------------------------------------------------
 # Conectamos los graficos Plotly con los componentes Dash
-@application.callback(
-
-)
-def test():
-    test = '123'
-
 
 @application.callback(
 

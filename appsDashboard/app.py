@@ -15,12 +15,10 @@ dbConnection = sqlEngine.connect()
 
 limit_table = ""
 
-
 def limit():
     return pd.read_sql(
         "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table,
         sqlEngine).to_dict(orient='records')
-
 
 # MAPAS
 
