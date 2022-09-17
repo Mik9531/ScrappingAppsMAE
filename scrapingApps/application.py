@@ -28,13 +28,6 @@ headers = {
 
 
 def time_passed(start, duration):
-    """tests if an amount of time has passed
-    Args:
-        start(float): timestamp of time()
-        duration(int): seconds that need to pass
-    Returns:
-        bool: are 'duration' seconds over since 'start'
-    """
     return start + duration <= time.time()
 
 
@@ -454,7 +447,6 @@ def my_link():
                                     if language_exists['programmingLanguage'] is None:
 
                                         id_download = download_apk(actual_app)
-                                        # id_download = None
                                         if id_download is not None:
                                             if os.path.exists(id_download):
 
