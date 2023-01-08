@@ -60,7 +60,6 @@ user_app_layout = html.Div([
 
 )
 def update_output(n_clicks, value):
-
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
                                  user='root',
                                  password='kalandria',
@@ -391,7 +390,6 @@ def update_output(n_clicks, value):
                     print(cursor.rowcount, "comentarios insertados.")
 
                 connection.close()
-
 
             return 'Aplicación "{}" añadida'.format(
                 app_details['title']
