@@ -1,23 +1,21 @@
 # coding=utf8
 
+import os
 import shutil
 import time
-import os
+
+import country_converter as coco
 import pymysql
 import requests
+from androguard.core.bytecodes.apk import APK
 from bs4 import BeautifulSoup
 from flask import Flask, render_template
-from androguard.core.bytecodes.apk import APK
 from google_play_scraper import app, permissions, reviews
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
-import country_converter as coco
-
-
-cc = coco.CountryConverter()
 
 from pathlib import Path
 
@@ -26,16 +24,31 @@ g_play_url = "https://play.google.com/store/apps/details?id="
 application = Flask(__name__)
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Safari/537.36'}
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/87.0.4280.141 Safari/537.36 Safari/537.36'}
+
+# Ocultamos la ventana que genera chrome para el scraping con estas opciones
+
+options = webdriver.ChromeOptions()
+options.add_argument('--no-sandbox')
+options.add_argument('--window-size=1920,1080')
+options.add_argument('--headless')
+options.add_argument('--disable-gpu')
+options.add_argument("--disable-setuid-sandbox")
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--ignore-ssl-errors=yes')
+options.add_argument('--ignore-certificate-errors')
 
 
+# Con esta funcion mediremos el tiempo de descarga para que no sea superior a 1 minuto
 def time_passed(start, duration):
     return start + duration <= time.time()
 
 
+# Funcion para realizar la descarga de la aplicacion
 def download_apk(actual_apk):
-    eliminateApk = False
-    notLink = True
+    eliminate_apk = False
+    not_link = True
 
     # Obtenemos el nombre del paquete
     package_id = actual_apk
@@ -44,20 +57,26 @@ def download_apk(actual_apk):
     g_play_res = requests.get(g_play_url + package_id,
                               headers=headers, allow_redirects=True)
     if g_play_res.status_code != 200:
-        notLink = False
+        not_link = False
 
     # Buscamos el paquete en la Web
+    url = "https://apk.support/download-app-es/" + package_id
+
     search_res = requests.get(
-        "https://apk.support/download-app-es/" + package_id,
+        url,
         headers=headers, allow_redirects=True)
 
     # Verificamos que lo encuentra correctamente
     if search_res.status_code != 200:
-        notLink = False
+        not_link = False
 
-    if notLink is True:
+    if not_link is True:
 
-        soup = BeautifulSoup(search_res.content, 'html.parser')
+        browser = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+
+        browser.get(url)
+        html = browser.page_source
+        soup = BeautifulSoup(html, 'lxml')
 
         tbody_children = soup.findAll('a')
 
@@ -87,31 +106,36 @@ def download_apk(actual_apk):
                 for chunk in r.iter_content(chunk_size=1024):
                     # Esperamos máximo 60 segundos, para evitar descargas muy lentas
                     if time_passed(start, 60):
-                        eliminateApk = True
+                        eliminate_apk = True
                         break
                     if chunk:
                         dl += len(chunk)
                         f.write(chunk)
-            print('Aplicación descargada')
 
-            print('Aplicación almacenada')
+            end = time.time()
+            print("Tiempo de descarga de %s segundos " % (end - start))
+            print('Aplicacion descargada')
+
+            print('Aplicacion almacenada')
         else:
             output_file = None
     else:
         output_file = None
 
-    if eliminateApk is True:
+    if eliminate_apk is True:
         os.remove(output_file)
         output_file = None
 
     return output_file
 
 
+# Plantilla de bienvenida
 @application.route('/')
 def index():
     return render_template('index.html')
 
 
+# Comienzo del scraping
 @application.route('/listadoApks/')
 def my_link():
     global button, actual_button
@@ -135,7 +159,7 @@ def my_link():
 
     collections_list_name = []
 
-    list_already_reviews = [item['appId'] for item in cursor.fetchall()]
+    list_already_reviews = [item["appId"] for item in cursor.fetchall()]
 
     check_permissions = []
     check_review_app = []
@@ -171,22 +195,12 @@ def my_link():
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS " + 'RELATEDS' + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255), relatedApp VARCHAR(255))")
 
-    # Creamos la tabla de puntuaciones
+    # Creamos la tabla de puntuaciones si no existe
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS " + 'SCORES' + "(appId VARCHAR(255) PRIMARY KEY, "
                                                    "score float(255,2), created DATE)")
 
-    # Ocultamos la ventana que genera chrome con estas opciones
-    options = webdriver.ChromeOptions()
-    options.add_argument('--no-sandbox')
-    options.add_argument('--window-size=1920,1080')
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    options.add_argument("--disable-setuid-sandbox")
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--ignore-ssl-errors=yes')
-    options.add_argument('--ignore-certificate-errors')
-
+    # Listado con los 249 paises que analizaremos
     countries = "AF,AX,AL,DZ,AS,AD,AO,AI,AQ,AG,AR,AM,AW,AU,AT,AZ,BH,BS,BD,BB,BY,BE,BZ,BJ,BM,BT,BO,BQ,BA,BW,BV,BR," \
                 "IO,BN,BG,BF,BI,KH,CM,CA,CV,KY,CF,TD,CL,CN,CX,CC,CO,KM,CG,CD,CK,CR,CI,HR,CU,CW,CY,CZ,DK,DJ,DM,DO," \
                 "EC,EG,SV,GQ,ER,EE,ET,FK,FO,FJ,FI,FR,GF,PF,TF,GA,GM,GE,DE,GH,GI,GR,GL,GD,GP,GU,GT,GG,GN,GW,GY,HT," \
@@ -198,7 +212,8 @@ def my_link():
 
     countries = countries.split(',')
 
-    cont_countries = 0  # Marcara la posicion de la aplicacion en el listado
+    # Marcara la posicion de la aplicacion en el listado
+    cont_countries = 0
 
     not_actual_apps = []
 
@@ -219,6 +234,7 @@ def my_link():
 
         collections_list = []
 
+        # Recorrido actual de paises
         print(str(cont_countries) + "/" + str(len(countries)))
 
         cont_countries += 1
@@ -233,7 +249,8 @@ def my_link():
 
         not_list_apps = []
 
-        cont_position = 1  # Marcara la posicion de la aplicacion en la coleccion
+        # Marcara la posicion de la aplicacion en la coleccion
+        cont_position = 1
 
         # Obtenemos los datos de las aplicaciones gratuitas
         if len(collections_list) == 0:
@@ -282,6 +299,8 @@ def my_link():
                 collections_list.append(TOP_FREE)
 
             not_button = True
+
+            # Obtenemos los datos de las aplicaciones top grossing
 
             try:
                 button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
@@ -384,7 +403,7 @@ def my_link():
 
                 for actual_app in collection:
 
-                    # AÃ±adimos a datos de la coleccion actual
+                    # Agregamos a datos de la coleccion actual
 
                     collection_apps = (actual_app, cont_position, country)
 
@@ -402,15 +421,18 @@ def my_link():
                         app_details = []
                         cont_iter = 0
 
+                        # Realizamos un bucle de 10 iteraciones ya que el servidor a veces no obtiene a la primera los datos de la aplicacion
+
                         while bool(app_details) is False and cont_iter < 10:
                             try:
-                                app_details = app(app_id=actual_app, lang='es')
+                                app_details = app(actual_app, lang="es")
+
                                 cont_iter += 1
                             except Exception:
                                 app_details = []
                                 cont_iter += 1
 
-                        if len(app_details):
+                        if len(app_details) and app_details['appId'] is not None:
                             score = app_details.get('score')
                             summary = app_details.get('summary')
                             description = app_details.get('description')
@@ -428,13 +450,13 @@ def my_link():
                             if score is not None:
                                 score = round(score, 2)
 
-                            # Descargamos la APK si no existe datos de lenguaje de programación en la tabla
-
                             package_name = None
 
                             app_details['programmingLanguage'] = ""
 
                             app_details['libraries'] = ""
+
+                            # Si la aplicacion es gratuita...
 
                             if (app_details['free'] is True):
 
@@ -446,7 +468,11 @@ def my_link():
 
                                 language_exists = cursor.fetchone()
                                 try:
-                                    if language_exists['programmingLanguage'] is None:
+
+                                    # ...descargamos la APK si no existe datos de lenguaje de programación en la tabla previos
+
+                                    if language_exists['programmingLanguage'] is None or language_exists[
+                                        'programmingLanguage'] == "":
 
                                         id_download = download_apk(actual_app)
                                         if id_download is not None:
@@ -456,14 +482,16 @@ def my_link():
                                                 remove_files = []
 
                                                 # Obtenemos el lenguaje de programacion usado
+
                                                 apk = APK(id_download)
                                                 files_apk = APK.get_files(apk)
 
                                                 # Si el archivo es un XAPK, extraemos para obtener sus datos y posteriormente eliminarlos
+
                                                 if (files_apk[0] == (actual_app + ".apk")):
                                                     remove_files = files_apk
                                                     remove_files.pop(0)
-                                                    print("extrayendo apk")
+                                                    print("Extrayendo apk...")
                                                     p = Path(id_download)
                                                     p.rename(p.with_suffix('.zip'))
                                                     shutil.unpack_archive("APKS/" + actual_app + '.zip',
@@ -485,7 +513,7 @@ def my_link():
                                                     app_details['programmingLanguage'] = 'Java'
 
                                                 if (len(files_apk) == 0):
-                                                    app_details['programmingLanguage'] = None
+                                                    app_details['programmingLanguage'] = 'Unknow'
 
                                                 # Obtenemos las librerías externas usadas
                                                 libraries = []
@@ -545,21 +573,22 @@ def my_link():
 
                                                 app_details['libraries'] = '|'.join(libraries)
 
-                                                # os.remove(id_download.rsplit('.', 1)[0])
-
                                                 try:
                                                     os.remove(id_download)
                                                     del id_download
                                                 except Exception as e:
                                                     print(e)
-                                        else:
-                                            app_details['programmingLanguage'] = language_exists['programmingLanguage']
-                                            app_details['libraries'] = language_exists['libraries']
+
+                                    else:
+                                        app_details['programmingLanguage'] = language_exists['programmingLanguage']
+                                        app_details['libraries'] = language_exists['libraries']
                                 except Exception as e:
                                     print(e)
 
                             if "appinventor" in actual_app:
                                 app_details['programmingLanguage'] = 'appInventor'
+
+                            # Añadimos a apps los datos de la app finales
 
                             apps = (app_details['appId'],
                                     app_details['title'],
@@ -569,11 +598,20 @@ def my_link():
                                     app_details['free'],
                                     app_details['developer'],
                                     app_details['url'],
-                                    app_details['icon'], description, installs, ratings,
-                                    reviews_num, androidVersionText, genre,
+                                    app_details['icon'],
+                                    description,
+                                    installs,
+                                    ratings,
+                                    reviews_num,
+                                    androidVersionText,
+                                    genre,
                                     genreId,
-                                    adSupported, recentChanges, released,
-                                    contentRating, app_details['programmingLanguage'], app_details['libraries']
+                                    adSupported,
+                                    recentChanges,
+                                    released,
+                                    contentRating,
+                                    app_details['programmingLanguage'],
+                                    app_details['libraries']
                                     )
 
                             total_apps.append(apps)
@@ -582,14 +620,14 @@ def my_link():
 
                             check_permission_app = False
 
-                            if app_details['appId'] not in check_permissions:
-                                check_permissions.append(app_details['appId'])
+                            if actual_app not in check_permissions:
+                                check_permissions.append(actual_app)
                                 check_permission_app = True
 
                             if check_permission_app:
 
                                 try:
-                                    permissions_data = permissions(app_details['appId'], lang='en')
+                                    permissions_data = permissions(actual_app)
                                 except Exception:
                                     permissions_data = None
 
@@ -608,6 +646,8 @@ def my_link():
                                     wifi_permission = 'Wi-Fi connection information' in permissions_data
                                     location_permission = 'Location' in permissions_data
 
+                                    # Añadimos los datos de permisos finales a data_permissions
+
                                     data_permissions = (app_details['appId'],
                                                         sms_permission,
                                                         storage_permission,
@@ -623,22 +663,23 @@ def my_link():
                                                         wifi_permission,
                                                         location_permission
                                                         )
+
                                     total_permissions.append(data_permissions)
 
                             # Obtenemos los 10 comentarios mas utiles de la aplicacion si no se encuentra ya en comentarios
 
-                            if app_details['appId'] not in list_already_reviews:
+                            if actual_app not in list_already_reviews:
 
                                 check_review = False
 
-                                if app_details['appId'] not in check_review_app:
-                                    check_review_app.append(app_details['appId'])
+                                if actual_app not in check_review_app:
+                                    check_review_app.append(actual_app)
                                     check_review = True
 
                                 if check_review:
 
                                     try:
-                                        reviews_data = reviews(app_details['appId'], lang='es', country='es',
+                                        reviews_data = reviews(actual_app, lang='es', country='es',
                                                                count=10)
                                     except Exception:
                                         reviews_data = []
@@ -654,9 +695,13 @@ def my_link():
                                                             review['score'],
                                                             review['content'],
                                                             )
+
+                                            # Añadimos los datos de los comentarios finales a total_reviews
+
                                             total_reviews.append(data_reviews)
 
-                # Insertarmos las aplicaciones
+                # Insertarmos las aplicaciones en la tabla APPS
+
                 try:
                     sql = "INSERT INTO APPS (appId," \
                           "title," \
@@ -667,7 +712,19 @@ def my_link():
                           "developer," \
                           "url," \
                           "icon," \
-                          "description,installs, ratings, reviews, androidVersionText, genre, genreId, adSupported, recentChanges, released, contentRating,programmingLanguage, libraries," \
+                          "description," \
+                          "installs, " \
+                          "ratings, " \
+                          "reviews, " \
+                          "androidVersionText, " \
+                          "genre," \
+                          "genreId, " \
+                          "adSupported, " \
+                          "recentChanges, " \
+                          "released, " \
+                          "contentRating, " \
+                          "programmingLanguage, " \
+                          "libraries," \
                           "created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW()) ON " \
                           "DUPLICATE KEY UPDATE updated = NOW()," \
                           "title=VALUES(title), " \
@@ -675,31 +732,63 @@ def my_link():
                           "summary=VALUES(summary), " \
                           "price=VALUES(price), " \
                           "free=VALUES(free), " \
-                          "url=VALUES(url), icon=VALUES(icon) , description=VALUES(description), installs=VALUES(installs), ratings=VALUES(ratings)," \
-                          "reviews=VALUES(reviews), androidVersionText=VALUES(androidVersionText), genre=VALUES(genre), genreId=VALUES(genreId),adSupported=VALUES(adSupported),recentChanges=VALUES(recentChanges)," \
-                          "released=VALUES(released), contentRating=VALUES(contentRating)"
+                          "url=VALUES(url), " \
+                          "icon=VALUES(icon) , " \
+                          "description=VALUES(description), " \
+                          "installs=VALUES(installs), " \
+                          "ratings=VALUES(ratings)," \
+                          "reviews=VALUES(reviews), " \
+                          "androidVersionText=VALUES(androidVersionText), " \
+                          "genre=VALUES(genre), " \
+                          "genreId=VALUES(genreId), " \
+                          "adSupported=VALUES(adSupported), " \
+                          "recentChanges=VALUES(recentChanges)," \
+                          "released=VALUES(released), " \
+                          "contentRating=VALUES(contentRating), " \
+                          "programmingLanguage=VALUES(programmingLanguage), libraries=VALUES(libraries)"
 
                     val = total_apps
                     cursor.executemany(sql, val)
                     connection.commit()
-                    print(cursor.rowcount, "aplicaciones insertadas.")
+                    print(cursor.rowcount, " aplicaciones insertadas.")
 
-                    # Insertamos los permisos
+                    # Insertamos los permisos en la tabla PERMISSIONS
                     if len(total_permissions):
                         sql = "INSERT INTO PERMISSIONS(appId," \
-                              "SMS, Storage, Camera, DeviceHistory, Microphone, Calendar, Phone, DeviceID, " \
-                              "Identity, PhotosMediaFiles, Contacts, WiFi, Location ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s," \
-                              "%s,%s,%s,%s) ON DUPLICATE KEY UPDATE appId = VALUES(appId), SMS = VALUES(SMS), Storage = " \
-                              "VALUES(Storage), Camera = VALUES(Camera), DeviceHistory = VALUES(DeviceHistory), " \
-                              "Microphone = VALUES(Microphone), Calendar = VALUES(Calendar), Phone = VALUES(Phone), " \
-                              "DeviceID = VALUES(DeviceID), Identity = VALUES(Identity), PhotosMediaFiles = VALUES(PhotosMediaFiles), Contacts = VALUES(Contacts), WiFi = VALUES(WiFi), Location = VALUES(Location) "
+                              "SMS, " \
+                              "Storage, " \
+                              "Camera, " \
+                              "DeviceHistory, " \
+                              "Microphone, " \
+                              "Calendar, " \
+                              "Phone, " \
+                              "DeviceID, " \
+                              "Identity, " \
+                              "PhotosMediaFiles, " \
+                              "Contacts, " \
+                              "WiFi, " \
+                              "Location ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s,%s,%s,%s) ON " \
+                              "DUPLICATE KEY UPDATE appId = VALUES(appId), " \
+                              "SMS = VALUES(SMS), " \
+                              "Storage = VALUES(Storage), " \
+                              "Camera = VALUES(Camera), " \
+                              "DeviceHistory = VALUES(DeviceHistory), " \
+                              "Microphone = VALUES(Microphone), " \
+                              "Calendar = VALUES(Calendar), " \
+                              "Phone = VALUES(Phone), " \
+                              "DeviceID = VALUES(DeviceID), " \
+                              "Identity = VALUES(Identity), " \
+                              "PhotosMediaFiles = VALUES(PhotosMediaFiles), " \
+                              "Contacts = VALUES(Contacts), " \
+                              "WiFi = VALUES(WiFi), " \
+                              "Location = VALUES(Location) "
 
                         val = total_permissions
                         cursor.executemany(sql, val)
                         connection.commit()
-                        print(cursor.rowcount, "permisos insertados.")
+                        print(cursor.rowcount, " permisos insertados.")
 
-                    # Insertamos los comentarios
+                    # Insertamos los comentarios en la tabla REVIEWS
                     if len(total_reviews):
                         sql = "INSERT INTO REVIEWS(id," \
                               "appId," \
@@ -711,7 +800,7 @@ def my_link():
                         val = total_reviews
                         cursor.executemany(sql, val)
                         connection.commit()
-                        print(cursor.rowcount, "comentarios insertados.")
+                        print(cursor.rowcount, " comentarios insertados.")
 
                     # Guardamos las aplicaciones en la tabla correcta de la coleccion
 
@@ -721,7 +810,7 @@ def my_link():
                         val = total_apps_collection
                         cursor.executemany(sql, val)
                         connection.commit()
-                        print(cursor.rowcount, "aplicaciones del listado insertadas.")
+                        print(cursor.rowcount, " aplicaciones del listado insertadas.")
                         total_apps_collection = []
                         cont_position = 0
                 except Exception as e:
