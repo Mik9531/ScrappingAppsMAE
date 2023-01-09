@@ -579,6 +579,9 @@ def my_link():
                                                 except Exception as e:
                                                     print(e)
 
+                                        else:
+                                            app_details['programmingLanguage'] = 'Unknow'
+
                                     else:
                                         app_details['programmingLanguage'] = language_exists['programmingLanguage']
                                         app_details['libraries'] = language_exists['libraries']
