@@ -6,7 +6,6 @@ import time
 
 import country_converter as coco
 import pymysql
-import requests
 from androguard.core.bytecodes.apk import APK
 from bs4 import BeautifulSoup
 from flask import Flask, render_template
@@ -16,16 +15,18 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-
+import undetected_chromedriver as uc
+import cloudscraper
 from pathlib import Path
+
+scraper = cloudscraper.create_scraper()
 
 g_play_url = "https://play.google.com/store/apps/details?id="
 
 application = Flask(__name__)
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/87.0.4280.141 Safari/537.36 Safari/537.36'}
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'}
 
 # Ocultamos la ventana que genera chrome para el scraping con estas opciones
 
@@ -47,6 +48,16 @@ def time_passed(start, duration):
 
 # Funcion para realizar la descarga de la aplicacion
 def download_apk(actual_apk):
+    options = webdriver.ChromeOptions()
+    options.add_argument('--no-sandbox')
+    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
+    options.add_argument("--disable-setuid-sandbox")
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--ignore-ssl-errors=yes')
+    options.add_argument('--ignore-certificate-errors')
+
     eliminate_apk = False
     not_link = True
 
@@ -54,25 +65,24 @@ def download_apk(actual_apk):
     package_id = actual_apk
 
     # Verificamos que el paquete exista en el Play Store
-    g_play_res = requests.get(g_play_url + package_id,
-                              headers=headers, allow_redirects=True)
+    g_play_res = scraper.get(g_play_url + package_id,
+                             headers=headers, allow_redirects=True)
     if g_play_res.status_code != 200:
         not_link = False
 
     # Buscamos el paquete en la Web
+
+    browser = uc.Chrome(options=options)
+    sub_dl_links = []
+
+    # Primer metodo
     url = "https://apk.support/download-app-es/" + package_id
 
-    search_res = requests.get(
+    search_res = scraper.get(
         url,
         headers=headers, allow_redirects=True)
 
-    # Verificamos que lo encuentra correctamente
-    if search_res.status_code != 200:
-        not_link = False
-
-    if not_link is True:
-
-        browser = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    if search_res.status_code == 200:
 
         browser.get(url)
         html = browser.page_source
@@ -80,34 +90,62 @@ def download_apk(actual_apk):
 
         tbody_children = soup.findAll('a')
 
-        sub_dl_links = []
-
         # Obtenemos el enlace de descarga de la aplicación
         for item in tbody_children:
             link = item.get('href')
             if link is not None:
                 if link.find("playstoreapi.com") != -1:
                     sub_dl_links.append(link)
+                    break
+
+    # Segundo metodo
+
+    if search_res.status_code != 200 or len(sub_dl_links) == 0:
+
+        url = "https://m.apkpure.com/es/" + package_id + "/download"
+
+        search_res = scraper.get(
+            url,
+            headers=headers, allow_redirects=True)
+
+        if search_res.status_code == 200:
+
+            browser.get(url)
+            html = browser.page_source
+            soup = BeautifulSoup(html, 'lxml')
+
+            tbody_children = soup.findAll('a')
+
+            # Obtenemos el enlace de descarga de la aplicación
+            for item in tbody_children:
+                link = item.get('href')
+                if link is not None:
+                    if link.find("version=latest") != -1:
+                        sub_dl_links.append(link)
+                        break
+
+    # Verificamos que lo encuentra correctamente
+    if search_res.status_code != 200 or len(sub_dl_links) == 0:
+        not_link = False
+
+    if not_link is True:
 
         if sub_dl_links is not None:
-            # download the apk
-            print('Downloading ' + package_id)
+            # Descargamos la apk
+            print('Descargando ' + package_id)
 
             # TODO: replace app_name with actual app name
             output_file = "APKS/" + package_id + ".apk"
 
-            r = requests.get(sub_dl_links[0], allow_redirects=True,
-                             stream=True)
+            start = time.time()
+
+            r = scraper.get(sub_dl_links[0])
 
             with open(output_file, 'wb') as f:
+
                 dl = 0
-                start = time.time()
 
                 for chunk in r.iter_content(chunk_size=1024):
-                    # Esperamos máximo 60 segundos, para evitar descargas muy lentas
-                    if time_passed(start, 60):
-                        eliminate_apk = True
-                        break
                     if chunk:
                         dl += len(chunk)
                         f.write(chunk)
@@ -411,6 +449,8 @@ def my_link():
 
                     print(str(cont_position) + "/" + str(len(collection)))
 
+                    print(actual_app)
+
                     cont_position += 1
 
                     # Obtenemos los detalles adicionales de la aplicacion si no se encuentra ya en nuestro listado
@@ -473,6 +513,8 @@ def my_link():
 
                                     if language_exists['programmingLanguage'] is None or language_exists[
                                         'programmingLanguage'] == "":
+
+                                        print('Procediendo a la descarga')
 
                                         id_download = download_apk(actual_app)
                                         if id_download is not None:
