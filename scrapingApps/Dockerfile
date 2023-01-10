@@ -2,6 +2,9 @@
 
 FROM python:3
 
+RUN mkdir -p /home/flask_app/listadoApks
+WORKDIR /home/flask_app/listadoApks
+
 #RUN apt-get update \
 #    && apt-get -y install gcc make \
 #    && rm -rf /var/lib/apt/lists/*s
@@ -18,8 +21,7 @@ RUN pip install gunicorn
 RUN pip install gunicorn flask
 
 
-RUN mkdir -p /home/flask_app/listadoApks
-WORKDIR /home/flask_app/listadoApks
+
 
 COPY templates /home/flask_app/listadoApks/templates
 COPY APKS /home/flask_app/listadoApks/APKS

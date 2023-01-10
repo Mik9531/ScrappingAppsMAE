@@ -137,6 +137,9 @@ def download_apk(actual_apk):
             # TODO: replace app_name with actual app name
             output_file = "APKS/" + package_id + ".apk"
 
+            # Definimos un tiempo de 1 minuto para la descarga
+            timeout = time.time() + 60
+
             start = time.time()
 
             r = scraper.get(sub_dl_links[0])
@@ -146,6 +149,10 @@ def download_apk(actual_apk):
                 dl = 0
 
                 for chunk in r.iter_content(chunk_size=1024):
+                    if time.time() > timeout:
+                        print('Descarga excedida')
+                        return None
+
                     if chunk:
                         dl += len(chunk)
                         f.write(chunk)
@@ -184,7 +191,9 @@ def my_link():
                                  password='kalandria',
                                  db='appsData',
                                  charset='utf8mb4',
-                                 cursorclass=pymysql.cursors.DictCursor)
+                                 cursorclass=pymysql.cursors.DictCursor, max_allowed_packet=67108864,
+                                 connect_timeout=60)
+
     cursor = connection.cursor()
 
     sql = "SELECT appId FROM PERMISSIONS GROUP BY appId"
@@ -426,13 +435,20 @@ def my_link():
                 total_reviews = []
 
                 if (cont_list != 1 and len(total_apps_collection)):
-                    table_collection = collection
 
-                    # Creamos la tabla de la coleccion actual
-                    cursor.execute(
-                        "CREATE TABLE IF NOT EXISTS " + collections_list_name[
-                            cont_list] + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
-                                         "position INT, country VARCHAR(255), created DATE)")
+                    try:
+
+                        table_collection = collection
+
+                        # Creamos la tabla de la coleccion actual
+                        cursor.execute(
+                            "CREATE TABLE IF NOT EXISTS " + collections_list_name[
+                                cont_list] + "(id INT AUTO_INCREMENT PRIMARY KEY, appId VARCHAR(255),"
+                                             "position INT, country VARCHAR(255), created DATE)")
+
+                    except Exception as e:
+                        print(e)
+                        not_actual_apps.append(collection)
 
                 else:
                     not_actual_apps.append(collection)
@@ -500,13 +516,18 @@ def my_link():
 
                             if (app_details['free'] is True):
 
-                                sql = "SELECT programmingLanguage,libraries FROM APPS WHERE appId = %s"
+                                try:
 
-                                val = actual_app
+                                    sql = "SELECT programmingLanguage,libraries FROM APPS WHERE appId = %s"
 
-                                cursor.execute(sql, val)
+                                    val = actual_app
 
-                                language_exists = cursor.fetchone()
+                                    cursor.execute(sql, val)
+
+                                    language_exists = cursor.fetchone()
+
+                                except Exception as e:
+                                    print(e)
                                 try:
 
                                     # ...descargamos la APK si no existe datos de lenguaje de programación en la tabla previos
