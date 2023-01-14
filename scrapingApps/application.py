@@ -10,14 +10,14 @@ from androguard.core.bytecodes.apk import APK
 from bs4 import BeautifulSoup
 from flask import Flask, render_template
 from google_play_scraper import app, permissions, reviews
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 import undetected_chromedriver as uc
 import cloudscraper
 from pathlib import Path
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import chromedriver_binary
 
 scraper = cloudscraper.create_scraper()
 
@@ -32,8 +32,10 @@ headers = {
 
 options = webdriver.ChromeOptions()
 options.add_argument('--no-sandbox')
+options.add_argument("--start-maximized")
 options.add_argument('--window-size=1920,1080')
 options.add_argument('--headless')
+options.add_argument("--disable-extensions")
 options.add_argument('--disable-gpu')
 options.add_argument("--disable-setuid-sandbox")
 options.add_argument('--disable-dev-shm-usage')
@@ -50,6 +52,7 @@ def time_passed(start, duration):
 def download_apk(actual_apk):
     options = webdriver.ChromeOptions()
     options.add_argument('--no-sandbox')
+    options.add_argument("--start-maximized")
     options.add_argument('--window-size=1920,1080')
     options.add_argument('--headless')
     options.add_argument('--disable-gpu')
@@ -72,37 +75,15 @@ def download_apk(actual_apk):
 
     # Buscamos el paquete en la Web
 
-    browser = uc.Chrome(options=options)
-    sub_dl_links = []
+    try:
 
-    # Primer metodo
-    url = "https://apk.support/download-app-es/" + package_id
+        # browser = uc.Chrome(options=options)
+        browser = uc.Chrome(options=options)
 
-    search_res = scraper.get(
-        url,
-        headers=headers, allow_redirects=True)
+        sub_dl_links = []
 
-    if search_res.status_code == 200:
-
-        browser.get(url)
-        html = browser.page_source
-        soup = BeautifulSoup(html, 'lxml')
-
-        tbody_children = soup.findAll('a')
-
-        # Obtenemos el enlace de descarga de la aplicación
-        for item in tbody_children:
-            link = item.get('href')
-            if link is not None:
-                if link.find("playstoreapi.com") != -1:
-                    sub_dl_links.append(link)
-                    break
-
-    # Segundo metodo
-
-    if search_res.status_code != 200 or len(sub_dl_links) == 0:
-
-        url = "https://m.apkpure.com/es/" + package_id + "/download"
+        # Primer metodo
+        url = "https://apk.support/download-app-es/" + package_id
 
         search_res = scraper.get(
             url,
@@ -120,58 +101,87 @@ def download_apk(actual_apk):
             for item in tbody_children:
                 link = item.get('href')
                 if link is not None:
-                    if link.find("version=latest") != -1:
+                    if link.find("playstoreapi.com") != -1:
                         sub_dl_links.append(link)
                         break
 
-    # Verificamos que lo encuentra correctamente
-    if search_res.status_code != 200 or len(sub_dl_links) == 0:
-        not_link = False
+        # Segundo metodo
 
-    if not_link is True:
+        if search_res.status_code != 200 or len(sub_dl_links) == 0:
 
-        if sub_dl_links is not None:
-            # Descargamos la apk
-            print('Descargando ' + package_id)
+            url = "https://m.apkpure.com/es/" + package_id + "/download"
 
-            # TODO: replace app_name with actual app name
-            output_file = "APKS/" + package_id + ".apk"
+            search_res = scraper.get(
+                url,
+                headers=headers, allow_redirects=True)
 
-            # Definimos un tiempo de 1 minuto para la descarga
-            timeout = time.time() + 60
+            if search_res.status_code == 200:
 
-            start = time.time()
+                browser.get(url)
+                html = browser.page_source
+                soup = BeautifulSoup(html, 'lxml')
 
-            r = scraper.get(sub_dl_links[0])
+                tbody_children = soup.findAll('a')
 
-            with open(output_file, 'wb') as f:
+                # Obtenemos el enlace de descarga de la aplicación
+                for item in tbody_children:
+                    link = item.get('href')
+                    if link is not None:
+                        if link.find("version=latest") != -1:
+                            sub_dl_links.append(link)
+                            break
 
-                dl = 0
+        # Verificamos que lo encuentra correctamente
+        if search_res.status_code != 200 or len(sub_dl_links) == 0:
+            not_link = False
 
-                for chunk in r.iter_content(chunk_size=1024):
-                    if time.time() > timeout:
-                        print('Descarga excedida')
-                        return None
+        if not_link is True:
 
-                    if chunk:
-                        dl += len(chunk)
-                        f.write(chunk)
+            if sub_dl_links is not None:
+                # Descargamos la apk
+                print('Descargando ' + package_id)
 
-            end = time.time()
-            print("Tiempo de descarga de %s segundos " % (end - start))
-            print('Aplicacion descargada')
+                # TODO: replace app_name with actual app name
+                output_file = "APKS/" + package_id + ".apk"
 
-            print('Aplicacion almacenada')
+                # Definimos un tiempo de 1 minuto para la descarga
+                timeout = time.time() + 60
+
+                start = time.time()
+
+                r = scraper.get(sub_dl_links[0])
+
+                with open(output_file, 'wb') as f:
+
+                    dl = 0
+
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if time.time() > timeout:
+                            print('Descarga excedida')
+                            return None
+
+                        if chunk:
+                            dl += len(chunk)
+                            f.write(chunk)
+
+                end = time.time()
+                print("Tiempo de descarga de %s segundos " % (end - start))
+                print('Aplicacion descargada')
+
+                print('Aplicacion almacenada')
+            else:
+                output_file = None
         else:
             output_file = None
-    else:
-        output_file = None
 
-    if eliminate_apk is True:
-        os.remove(output_file)
-        output_file = None
+        if eliminate_apk is True:
+            os.remove(output_file)
+            output_file = None
 
-    return output_file
+        return output_file
+
+    except Exception:
+        return None
 
 
 # Plantilla de bienvenida
@@ -255,7 +265,7 @@ def my_link():
                 "LT,LU,MO,MK,MG,MW,MY,MV,ML,MT,MH,MQ,MR,MU,YT,MX,FM,MD,MC,MN,ME,MS,MA,MZ,MM,NA,NR,NP,NL,NC,NZ,NI," \
                 "NE,NG,NU,NF,MP,NO,OM,PK,PW,PS,PA,PG,PY,PE,PH,PN,PL,PT,PR,QA,RE,RO,RU,RW,BL,SH,KN,LC,MF,PM,VC,WS," \
                 "SM,ST,SA,SN,RS,SC,SL,SG,SX,SK,SI,SB,SO,ZA,GS,SS,ES,LK,SD,SR,SJ,SZ,SE,CH,SY,TW,TJ,TZ,TH,TL,TG,TK," \
-                "TO,TT,TN,TR,TM,TC,TV,UG,UA,AE,GB,US,UM,UY,UZ,VU,VE,VN,VG,VI,WF,EH,YE,ZM,ZW "
+                "TO,TT,TN,TR,TM,TC,TV,UG,UA,AE,GB,US,UM,UY,UZ,VU,VE,VN,VG,VI,WF,EH,YE,ZM,ZW"
 
     countries = countries.split(',')
 
@@ -273,155 +283,161 @@ def my_link():
 
     for country in countries:
 
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        try:
 
-        TOP_FREE = []
-        TOP_GROSSING = []
-        TOP_PAID = []
+            driver = webdriver.Chrome(options=options)
 
-        collections_list = []
+            TOP_FREE = []
+            TOP_GROSSING = []
+            TOP_PAID = []
 
-        # Recorrido actual de paises
-        print(str(cont_countries) + "/" + str(len(countries)))
+            collections_list = []
 
-        cont_countries += 1
+            # Recorrido actual de paises
+            print(str(cont_countries) + "/" + str(len(countries)))
 
-        not_button = True
-
-        url = 'https://play.google.com/store/apps?gl=' + country + '&hl=es'
-
-        country = coco.convert(names=country, to='ISO3')
-
-        print(country)
-
-        not_list_apps = []
-
-        # Marcara la posicion de la aplicacion en la coleccion
-        cont_position = 1
-
-        # Obtenemos los datos de las aplicaciones gratuitas
-        if len(collections_list) == 0:
-            driver.get(url)
-            time.sleep(5)
-
-            try:
-                button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
-                actual_button = button[6]
-            except Exception:
-                not_button = False
-
-            if not_button is True:
-                try:
-                    actual_button.click()
-                    time.sleep(5)
-
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
-
-
-                except Exception:
-                    add_list = False
-                    actual_button.click()
-                    time.sleep(5)
-
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
-
-                if len(elems):
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
-                    for elem in elems:
-                        href = elem.get_attribute('href')
-                        if "details?id" in href:
-                            app_id = href.split('id=')[1]
-                            if "Posicionamiento" in elem.accessible_name:
-                                TOP_FREE.append(app_id)
-                            else:
-                                if app_id not in not_list_apps:
-                                    not_list_apps.append(app_id)
-
-                print("Obtenidos TOP_FREE")
-                collections_list_name.append("")
-                collections_list.append(not_list_apps)
-
-                collections_list_name.append("TOP_FREE")
-                collections_list.append(TOP_FREE)
+            cont_countries += 1
 
             not_button = True
 
-            # Obtenemos los datos de las aplicaciones top grossing
+            url = 'https://play.google.com/store/apps?gl=' + country + '&hl=es'
 
-            try:
-                button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
-                actual_button = button[7]
-            except Exception:
-                not_button = False
+            country = coco.convert(names=country, to='ISO3')
 
-            if not_button is True:
+            print(country)
+
+            not_list_apps = []
+
+            # Marcara la posicion de la aplicacion en la coleccion
+            cont_position = 1
+
+            # Obtenemos los datos de las aplicaciones gratuitas
+            if len(collections_list) == 0:
+                driver.get(url)
+                # time.sleep(5)
+
                 try:
-                    actual_button.click()
-                    time.sleep(5)
-
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
-
+                    button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+                    # WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                    actual_button = button[6]
                 except Exception:
-                    actual_button.click()
-                    time.sleep(5)
+                    not_button = False
 
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                if not_button is True:
+                    try:
+                        actual_button.click()
+                        # time.sleep(5)
 
-                if len(elems):
-                    for elem in elems:
-                        href = elem.get_attribute('href')
-                        if "details?id" in href:
-                            app_id = href.split('id=')[1]
-                            if "Posicionamiento" in elem.accessible_name:
-                                TOP_GROSSING.append(app_id)
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-                print("Obtenidos GROSSING")
-                collections_list.append(TOP_GROSSING)
-                collections_list_name.append("GROSSING")
 
-            # Obtenemos los datos de las aplicaciones top ventas
+                    except Exception:
+                        add_list = False
+                        actual_button.click()
+                        # time.sleep(5)
 
-            actual_button = True
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-            try:
-                button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
-                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
-                actual_button = button[8]
-            except Exception:
-                not_button = False
+                    if len(elems):
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                        for elem in elems:
+                            href = elem.get_attribute('href')
+                            if "details?id" in href:
+                                app_id = href.split('id=')[1]
+                                if "Posicionamiento" in elem.accessible_name:
+                                    TOP_FREE.append(app_id)
+                                else:
+                                    if app_id not in not_list_apps:
+                                        not_list_apps.append(app_id)
 
-            if not_button is True:
+                    print("Obtenidos TOP_FREE")
+                    collections_list_name.append("")
+                    collections_list.append(not_list_apps)
+
+                    collections_list_name.append("TOP_FREE")
+                    collections_list.append(TOP_FREE)
+
+                not_button = True
+
+                # Obtenemos los datos de las aplicaciones top grossing
+
                 try:
-                    button[8].click()
-                    time.sleep(5)
-
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
-
+                    button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+                    # WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                    actual_button = button[7]
                 except Exception:
-                    button[8].click()
-                    time.sleep(5)
+                    not_button = False
 
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                if not_button is True:
+                    try:
+                        actual_button.click()
+                        # time.sleep(5)
 
-                if len(elems):
-                    elems = driver.find_elements(by=By.TAG_NAME, value='a')
-                    for elem in elems:
-                        href = elem.get_attribute('href')
-                        if "details?id" in href:
-                            app_id = href.split('id=')[1]
-                            if "Posicionamiento" in elem.accessible_name:
-                                TOP_PAID.append(app_id)
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-                print("Obtenidos TOP_PAID")
-                collections_list.append(TOP_PAID)
+                    except Exception:
+                        actual_button.click()
+                        # time.sleep(5)
 
-            driver.close()
-            driver.quit()
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
 
-        cont_list = 0
+                    if len(elems):
+                        for elem in elems:
+                            href = elem.get_attribute('href')
+                            if "details?id" in href:
+                                app_id = href.split('id=')[1]
+                                if "Posicionamiento" in elem.accessible_name:
+                                    TOP_GROSSING.append(app_id)
 
+                    print("Obtenidos GROSSING")
+                    collections_list.append(TOP_GROSSING)
+                    collections_list_name.append("GROSSING")
+
+                # Obtenemos los datos de las aplicaciones top ventas
+
+                actual_button = True
+
+                try:
+                    button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
+                    # WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
+                    actual_button = button[8]
+                except Exception:
+                    not_button = False
+
+                if not_button is True:
+                    try:
+                        button[8].click()
+                        # time.sleep(5)
+
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
+
+                    except Exception:
+                        button[8].click()
+                        # time.sleep(5)
+
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
+
+                    if len(elems):
+                        elems = driver.find_elements(by=By.TAG_NAME, value='a')
+                        for elem in elems:
+                            href = elem.get_attribute('href')
+                            if "details?id" in href:
+                                app_id = href.split('id=')[1]
+                                if "Posicionamiento" in elem.accessible_name:
+                                    TOP_PAID.append(app_id)
+
+                    print("Obtenidos TOP_PAID")
+                    collections_list.append(TOP_PAID)
+
+            cont_list = 0
+
+
+        except Exception as e:
+            print(e)
+            collections_list = []
+
+        driver.close()
+        driver.quit()
         for collection in collections_list:
 
             if len(collection):
@@ -528,6 +544,7 @@ def my_link():
 
                                 except Exception as e:
                                     print(e)
+                                    language_exists = None
                                 try:
 
                                     # ...descargamos la APK si no existe datos de lenguaje de programación en la tabla previos
@@ -537,7 +554,7 @@ def my_link():
 
                                         print('Procediendo a la descarga')
 
-                                        id_download = download_apk(actual_app)
+                                        id_download = None
                                         if id_download is not None:
                                             if os.path.exists(id_download):
 
@@ -579,62 +596,68 @@ def my_link():
                                                     app_details['programmingLanguage'] = 'Unknow'
 
                                                 # Obtenemos las librerías externas usadas
-                                                libraries = []
-                                                if (any("okhttp3" in string for string in files_apk)):
-                                                    libraries.append('okhttp3')
 
-                                                if (any("picasso" in string for string in files_apk)):
-                                                    libraries.append('picasso')
+                                                if language_exists['libraries'] is None or language_exists[
+                                                    'libraries'] == "":
+                                                    libraries = []
+                                                    if (any("okhttp3" in string for string in files_apk)):
+                                                        libraries.append('okhttp3')
 
-                                                if (any("jackson" in string for string in files_apk)):
-                                                    libraries.append('jackson')
+                                                    if (any("picasso" in string for string in files_apk)):
+                                                        libraries.append('picasso')
 
-                                                if (any("okio" in string for string in files_apk)):
-                                                    libraries.append('okio')
+                                                    if (any("jackson" in string for string in files_apk)):
+                                                        libraries.append('jackson')
 
-                                                if (any("webrtc" in string for string in files_apk)):
-                                                    libraries.append('webrtc')
+                                                    if (any("okio" in string for string in files_apk)):
+                                                        libraries.append('okio')
 
-                                                if (any("exoplayer" in string for string in files_apk)):
-                                                    libraries.append('exoplayer')
+                                                    if (any("webrtc" in string for string in files_apk)):
+                                                        libraries.append('webrtc')
 
-                                                if (any("firebase" in string for string in files_apk)):
-                                                    libraries.append('firebase')
+                                                    if (any("exoplayer" in string for string in files_apk)):
+                                                        libraries.append('exoplayer')
 
-                                                if (any("dagger" in string for string in files_apk)):
-                                                    libraries.append('dagger')
+                                                    if (any("firebase" in string for string in files_apk)):
+                                                        libraries.append('firebase')
 
-                                                if (any("chromium" in string for string in files_apk)):
-                                                    libraries.append('chromium')
+                                                    if (any("dagger" in string for string in files_apk)):
+                                                        libraries.append('dagger')
 
-                                                if (any("spongycastle" in string for string in files_apk)):
-                                                    libraries.append('spongycastle')
+                                                    if (any("chromium" in string for string in files_apk)):
+                                                        libraries.append('chromium')
 
-                                                if (any("facebook" in string for string in files_apk)):
-                                                    libraries.append('facebook')
+                                                    if (any("spongycastle" in string for string in files_apk)):
+                                                        libraries.append('spongycastle')
 
-                                                if (any("bolts" in string for string in files_apk)):
-                                                    libraries.append('bolts')
+                                                    if (any("facebook" in string for string in files_apk)):
+                                                        libraries.append('facebook')
 
-                                                if (any("appsflyer" in string for string in files_apk)):
-                                                    libraries.append('appsflyer')
+                                                    if (any("bolts" in string for string in files_apk)):
+                                                        libraries.append('bolts')
 
-                                                if (any("Gson" in string for string in files_apk)):
-                                                    libraries.append('Gson')
+                                                    if (any("appsflyer" in string for string in files_apk)):
+                                                        libraries.append('appsflyer')
 
-                                                if (any("jsoup" in string for string in files_apk)):
-                                                    libraries.append('jsoup')
+                                                    if (any("Gson" in string for string in files_apk)):
+                                                        libraries.append('Gson')
 
-                                                if (any("retrofit" in string for string in files_apk)):
-                                                    libraries.append('retrofit')
+                                                    if (any("jsoup" in string for string in files_apk)):
+                                                        libraries.append('jsoup')
 
-                                                if (any("glide" in string for string in files_apk)):
-                                                    libraries.append('glide')
+                                                    if (any("retrofit" in string for string in files_apk)):
+                                                        libraries.append('retrofit')
 
-                                                if (any("tensorflow" in string for string in files_apk)):
-                                                    libraries.append('tensorflow')
+                                                    if (any("glide" in string for string in files_apk)):
+                                                        libraries.append('glide')
 
-                                                app_details['libraries'] = '|'.join(libraries)
+                                                    if (any("tensorflow" in string for string in files_apk)):
+                                                        libraries.append('tensorflow')
+
+                                                    app_details['libraries'] = '|'.join(libraries)
+
+                                                else:
+                                                    app_details['libraries'] = language_exists['libraries']
 
                                                 try:
                                                     os.remove(id_download)
