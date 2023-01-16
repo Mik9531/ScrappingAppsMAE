@@ -193,7 +193,7 @@ def index():
 # Comienzo del scraping
 @application.route('/listadoApks/')
 def my_link():
-    global button, actual_button
+    global button, actual_button, driver, cont_list
     start_time = time.time()
     # Creamos la conexion a la base de datos
     connection = pymysql.connect(host='testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com',
@@ -201,8 +201,7 @@ def my_link():
                                  password='kalandria',
                                  db='appsData',
                                  charset='utf8mb4',
-                                 cursorclass=pymysql.cursors.DictCursor, max_allowed_packet=67108864,
-                                 connect_timeout=60)
+                                 cursorclass=pymysql.cursors.DictCursor, max_allowed_packet=67108864)
 
     cursor = connection.cursor()
 
@@ -542,8 +541,11 @@ def my_link():
 
                                     language_exists = cursor.fetchone()
 
+                                    print(language_exists['programmingLanguage'])
+
                                 except Exception as e:
                                     print(e)
+                                    print('Error al obtener lenguaje de programación')
                                     language_exists = None
                                 try:
 
