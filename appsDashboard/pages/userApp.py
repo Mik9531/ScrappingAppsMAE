@@ -1,7 +1,8 @@
 # coding=utf8
 import os
 
-from dash import Dash, dcc, html, Input, Output, State
+import dash
+from dash import Dash, dcc, html, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 # from app import application
 import pymysql
@@ -10,8 +11,11 @@ from google_play_scraper import app, permissions, reviews
 
 # ------------------------------------------------------------------------------
 
+dash.register_page(__name__, path='/userApp')
 
-user_app_layout = html.Div([
+print('/userApp')
+
+layout = html.Div([
 
     dbc.Card(
         dbc.CardBody([
@@ -80,7 +84,7 @@ user_app_layout = html.Div([
 ])
 
 
-@application.callback(
+@callback(
     Output('container-button-basic', 'children'),
     Input('submit-val', 'n_clicks'),
     State('inputId', 'value'),

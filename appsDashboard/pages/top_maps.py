@@ -8,6 +8,8 @@ from dash import dcc, html, Input, Output
 
 # from app import last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps
 
+
+
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
 

@@ -1,8 +1,23 @@
 # coding=utf8
 from sqlalchemy import create_engine
 import dash
-import dash_bootstrap_components as dbc
 import pandas as pd
+from dash import dcc, html, Input, Output, callback, Dash
+import dash_bootstrap_components as dbc
+# from top_maps import top_maps_layout
+# from graphics import graphics_layout
+# from home import home_layout
+# from totalApps import apps_layout
+# from pages.userApp import user_app_layout
+from dash_iconify import DashIconify
+
+application = Dash(__name__, suppress_callback_exceptions=True, use_pages=True,
+                   external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
+                   meta_tags=[{'name': 'viewport',
+                               'content': 'width=device-width, initial-scale=1'}]
+                   )
+
+print(dash.__version__)
 
 # Importamos los datos desde nuestro mysql
 
@@ -96,22 +111,7 @@ top10Grossing_apps = pd.read_sql(
 
 dbConnection.close()
 
-from dash import dcc, html, Input, Output
-import dash_bootstrap_components as dbc
-from top_maps import top_maps_layout
-from graphics import graphics_layout
-from userApp import user_app_layout
-from home import home_layout
-from totalApps import apps_layout
-from dash_iconify import DashIconify
-
 titles_apps = []
-
-application = dash.Dash(__name__, suppress_callback_exceptions=True,
-                        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
-                        meta_tags=[{'name': 'viewport',
-                                    'content': 'width=device-width, initial-scale=1'}]
-                        )
 
 server = application.server
 
@@ -176,28 +176,30 @@ application.layout = html.Div(
             color="dark",
         ),
 
-        html.Div(id='page-content', className="page-content"),
+        dash.page_container
+
+        # html.Div(id='page-content', className="page-content"),
 
     ])
 
 
-@application.callback(
+@callback(
     Output("page-content", "children"),
     Input('url', 'pathname')
 )
 def switch_tab(pathname):
     print(pathname)
     if pathname == '/home' or pathname == '/':
-        return home_layout
-    elif pathname == '/top-maps':
-        return top_maps_layout
-    elif pathname == '/apps':
-        return apps_layout
-    elif pathname == '/graphics':
-        return graphics_layout
-    elif pathname == '/userApp':
-        return user_app_layout
+        return None
+    # elif pathname == '/top-maps':
+    #     return top_maps_layout
+    # elif pathname == '/apps':
+    #     return apps_layout
+    # elif pathname == '/graphics':
+    #     return graphics_layout
+    # elif pathname == '/userApp':
+    #     return user_app_layout
 
 
 if __name__ == '__main__':
-    application.run_server(debug=True, host='0.0.0.0', port=8080, threaded=True, dev_tools_hot_reload=True)
+    application.run_server(debug=True, host='0.0.0.0', port=8080)

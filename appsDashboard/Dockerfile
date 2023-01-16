@@ -8,7 +8,7 @@ WORKDIR /home/dashboard
 COPY assets /home/dashboard/assets
 
 
-COPY index.py app.py boot.sh home.py graphics.py totalApps.py top_maps.py requirements.txt ./
+COPY pages/index.py app.py boot.sh home.py graphics.py totalApps.py top_maps.py requirements.txt ./
 RUN chmod +x boot.sh
 
 
