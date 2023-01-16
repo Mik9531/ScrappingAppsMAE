@@ -1,7 +1,7 @@
 # coding=utf8
 from dash import Dash, dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
-from app import application, top_paid_apps, last_date, top10Free_apps, top_grossing_apps, top10Paid_apps, top10Grossing_apps
+# from app import application, top_paid_apps, last_date, top10Free_apps, top_grossing_apps, top10Paid_apps, top10Grossing_apps
 
 # ------------------------------------------------------------------------------
 

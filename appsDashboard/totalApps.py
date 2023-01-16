@@ -4,13 +4,14 @@ import json
 import dash
 import dash_bootstrap_components as dbc
 import flask
-import pandas as pd
+# import pandas as pd
 from dash import dash_table
 from dash import dcc, html, Input, Output
 from dash_iconify import DashIconify
 from sqlalchemy import create_engine
 
-from app import application, last_date, init_date, titles_apps, titles_apps_list
+# from app import application, last_date, init_date, titles_apps, titles_apps_list
+# from app import pd
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]

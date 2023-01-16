@@ -13,10 +13,8 @@ RUN chmod +x boot.sh
 
 
 
-RUN pip install dash-iconify==0.1.2
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
-RUN pip install dash-daq
 
 
 ENV PORT 8080

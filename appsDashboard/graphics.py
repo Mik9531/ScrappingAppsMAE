@@ -1,15 +1,11 @@
 # coding=utf8
 
 import dash_bootstrap_components as dbc
-import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
-
+import plotly.graph_objects as go
 from dash import dcc, html, Input, Output
 
-from app import application, last_date, init_date, titles_apps, top_grossing_apps, top_free_apps, top_paid_apps, \
-    top_paid_apps, \
-    titles_apps_list, contApps, contReviews, contTechs
+# from app import application, last_date, init_date, contApps, contReviews, contTechs
 
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
@@ -137,7 +133,7 @@ graphics_layout = html.Div([
     [Input(component_id='fieldDropdown', component_property='value')]
 )
 def update_graph(fieldDropdown):
-    from app import limit
+    # from app import limit
 
     titles_apps = limit()
 

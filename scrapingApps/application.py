@@ -15,9 +15,7 @@ import undetected_chromedriver as uc
 import cloudscraper
 from pathlib import Path
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-import chromedriver_binary
+
 
 scraper = cloudscraper.create_scraper()
 
@@ -320,6 +318,7 @@ def my_link():
                     # WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'ypTNYd')))
                     actual_button = button[6]
                 except Exception:
+                    print('Boton no encontrado')
                     not_button = False
 
                 if not_button is True:
@@ -331,6 +330,8 @@ def my_link():
 
 
                     except Exception:
+                        print('Lista no encontrada')
+
                         add_list = False
                         actual_button.click()
                         # time.sleep(5)
@@ -358,7 +359,7 @@ def my_link():
 
                 not_button = True
 
-                # Obtenemos los datos de las aplicaciones top grossing
+                # Obtenemos los datos de las aplicaciones Top Grossing
 
                 try:
                     button = driver.find_elements(by=By.CLASS_NAME, value='ypTNYd')
@@ -392,7 +393,7 @@ def my_link():
                     collections_list.append(TOP_GROSSING)
                     collections_list_name.append("GROSSING")
 
-                # Obtenemos los datos de las aplicaciones top ventas
+                # Obtenemos los datos de las aplicaciones Top Ventas
 
                 actual_button = True
 
@@ -595,7 +596,7 @@ def my_link():
                                                     app_details['programmingLanguage'] = 'Java'
 
                                                 if (len(files_apk) == 0):
-                                                    app_details['programmingLanguage'] = 'Unknow'
+                                                    app_details['programmingLanguage'] = 'Desconocido'
 
                                                 # Obtenemos las librerías externas usadas
 
@@ -668,7 +669,7 @@ def my_link():
                                                     print(e)
 
                                         else:
-                                            app_details['programmingLanguage'] = 'Unknow'
+                                            app_details['programmingLanguage'] = 'Desconocido'
 
                                     else:
                                         app_details['programmingLanguage'] = language_exists['programmingLanguage']
