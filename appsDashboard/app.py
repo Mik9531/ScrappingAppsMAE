@@ -20,7 +20,7 @@ application = Dash(__name__, suppress_callback_exceptions=True, use_pages=True,
 print(dash.__version__)
 
 # Layout
-layout = html.Div(
+application.layout = html.Div(
     [
         dcc.Location(id='url', refresh=False),
 
@@ -85,6 +85,25 @@ layout = html.Div(
         html.Div(id='page-content', className="page-content"),
 
     ])
+
+
+@callback(
+    Output("page-content", "children"),
+    Input('url', 'pathname')
+)
+def switch_tab(pathname):
+    print(pathname)
+    if pathname == '/home' or pathname == '/':
+        return None
+    # elif pathname == '/top-maps':
+    #     return top_maps_layout
+    # elif pathname == '/apps':
+    #     return apps_layout
+    # elif pathname == '/graphics':
+    #     return graphics_layout
+    # elif pathname == '/userApp':
+    #     return user_app_layout
+
 
 if __name__ == '__main__':
     application.run_server(debug=True, host='0.0.0.0', port=8080)
@@ -170,21 +189,3 @@ dbConnection.close()
 titles_apps = []
 
 server = application.server
-
-
-@callback(
-    Output("page-content", "children"),
-    Input('url', 'pathname')
-)
-def switch_tab(pathname):
-    print(pathname)
-    if pathname == '/home' or pathname == '/':
-        return None
-    # elif pathname == '/top-maps':
-    #     return top_maps_layout
-    # elif pathname == '/apps':
-    #     return apps_layout
-    # elif pathname == '/graphics':
-    #     return graphics_layout
-    # elif pathname == '/userApp':
-    #     return user_app_layout
