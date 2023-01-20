@@ -4,7 +4,6 @@ import os
 import dash
 from dash import Dash, dcc, html, Input, Output, State, callback
 import dash_bootstrap_components as dbc
-# from app import application
 import pymysql
 from androguard.core.bytecodes.apk import APK
 from google_play_scraper import app, permissions, reviews

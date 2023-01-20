@@ -13,13 +13,15 @@ from sqlalchemy import create_engine
 # from app import application, last_date, init_date, titles_apps, titles_apps_list
 # from app import pd
 
+
+
 init_date = init_date['created'].values[0]
 last_date = last_date['created'].values[0]
 
 # ------------------------------------------------------------------------------
 # App layout
 
-apps_layout = html.Div([
+layout = html.Div([
 
     dbc.Row(
         [
