@@ -16,7 +16,6 @@ import cloudscraper
 from pathlib import Path
 from selenium import webdriver
 
-
 scraper = cloudscraper.create_scraper()
 
 g_play_url = "https://play.google.com/store/apps/details?id="

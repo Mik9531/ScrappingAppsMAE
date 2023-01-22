@@ -3,7 +3,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, callback
 
-from querys import top10Paid_apps, top10Grossing_apps, top10Free_apps, last_date, top_paid_apps, last_date_data
+from app.querys import top10Paid_apps, top10Grossing_apps, top10Free_apps, top_paid_apps, last_date_data
 
 # ------------------------------------------------------------------------------
 
