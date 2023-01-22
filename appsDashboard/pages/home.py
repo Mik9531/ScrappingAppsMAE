@@ -1,8 +1,9 @@
 # coding=utf8
-from dash import Dash, dcc, html, Input, Output, dash_table, callback
+import dash
 import dash_bootstrap_components as dbc
-# from app import application, top_paid_apps, last_date, top10Free_apps, top_grossing_apps, top10Paid_apps, \
-#     top10Grossing_apps
+from dash import dcc, html, Input, Output, callback
+
+from querys import top10Paid_apps, top10Grossing_apps, top10Free_apps, last_date, top_paid_apps, last_date_data
 
 # ------------------------------------------------------------------------------
 
@@ -11,6 +12,9 @@ output_cards_grossing = []
 
 cont_list_top_paid_apps = len(top10Paid_apps)
 cont_list_top_grossing_apps = len(top10Grossing_apps)
+
+dash.register_page(__name__, path='/')
+
 
 for i in range(cont_list_top_paid_apps):
     output_cards_paid.append(dbc.Card(
@@ -79,6 +83,7 @@ for i in range(cont_list_top_grossing_apps):
         ],
 
     ))
+
 
 layout = html.Div([
 
@@ -183,8 +188,6 @@ layout = html.Div([
 
 )
 def get_home_data(pathname):
-
-
-    container = "{}".format(last_date['created'][0])
+    container = "{}".format(last_date_data['created'][0])
 
     return container

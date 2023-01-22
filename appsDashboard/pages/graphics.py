@@ -8,15 +8,8 @@ from dash import dcc, html, Input, Output, callback
 import dash_daq as daq
 import pandas as pd
 
-# from app import application, last_date, init_date, contApps, contReviews, contTechs
-
-# init_date = init_date['created'].values[0]
-# last_date = last_date['created'].values[0]
-
 # ------------------------------------------------------------------------------
 # Graphics layout
-
-print('/graphics')
 
 dash.register_page(__name__, path='/graphics')
 
@@ -139,16 +132,14 @@ layout = html.Div([
 
 )
 def update_graph(fieldDropdown):
-    global titles_apps, contApps, contReviews, contTechs
-
-    limit_table_top = " "
-    limit_table_apps = " "
+    global titles_apps, contApps, contReviews, contTechs, loading
 
     trigger_component_id = dash.callback_context.triggered[0]["prop_id"].split(".")[
         0]  # Comprobamos si es la primera vez que entra
 
+    limit_table_apps = " "
+
     if len(trigger_component_id) == 0:
-        print('Vacio')
         sqlEngine = create_engine(
             'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
 
@@ -204,12 +195,11 @@ def update_graph(fieldDropdown):
         loading = ''
 
     else:
-        print('No vacio')
 
         dffPie = titles_apps.copy()
-
+        #
         dffPie = [i for i in dffPie if i['programmingLanguage'] is not None and i['programmingLanguage'] != '']
-
+        #
         for app in dffPie:
 
             if app['genreId'] is not None:
@@ -233,6 +223,6 @@ def update_graph(fieldDropdown):
 
         figPie = go.Figure(figPie)
 
-        loading = ''
+        # loading = ''
 
     return figPie, loading, contApps, contReviews, contTechs

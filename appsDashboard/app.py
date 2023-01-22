@@ -3,15 +3,11 @@ from sqlalchemy import create_engine
 import dash
 from dash import dcc, html, Input, Output, callback, Dash
 import dash_bootstrap_components as dbc
-# from top_maps import top_maps_layout
-# from graphics import graphics_layout
-# from home import home_layout
-# from totalApps import apps_layout
-# from pages.userApp import user_app_layout
 from dash_iconify import DashIconify
 import pandas as pd
 
-application = Dash(__name__, suppress_callback_exceptions=True, use_pages=True,
+application = Dash(__name__, suppress_callback_exceptions=True, use_pages=True, eager_loading=True,
+                   update_title='Actualizando...', prevent_initial_callbacks=False,
                    external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
                    meta_tags=[{'name': 'viewport',
                                'content': 'width=device-width, initial-scale=1'}]
@@ -106,7 +102,7 @@ def switch_tab(pathname):
 
 
 if __name__ == '__main__':
-    application.run_server(debug=True, host='0.0.0.0', port=8080)
+    application.run_server(debug=False, host='0.0.0.0', port=8080)
 
 # Importamos los datos desde nuestro mysql
 
@@ -119,16 +115,6 @@ limit_table_apps = " LIMIT 100 "
 
 # MAPAS
 
-
-top_free_apps = pd.read_sql(
-    "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_FREE TG INNER JOIN APPS A ON (A.appId "
-    "= "
-    "TG.appId)" + limit_table_top, con=dbConnection)
-
-top_paid_apps = pd.read_sql(
-    "SELECT TG.created, A.title, TG.position, TG.country, TG.appId, A.icon, A.url, A.developer, A.score, A.summary from TOP_PAID TG INNER JOIN APPS A ON (A.appId "
-    "= "
-    "TG.appId)" + limit_table_top, con=dbConnection)
 
 # titles_apps = limit()
 
@@ -156,14 +142,9 @@ contTechs = len(allTechs)
 
 # Intentar cambiar por obtencion de TOPS anterior
 
-# Seleccionamos la fecha inicial de la base de datos (y fecha mínima a poder seleccionar)
-init_date = pd.read_sql(
-    "SELECT TF.created from TOP_FREE TF WHERE country = 'USA' ORDER BY TF.created LIMIT 1", sqlEngine)
 
 # Seleccionamos la fecha actual (y fecha máxima a seleccionar)
 
-last_date = pd.read_sql(
-    "SELECT TF.created from TOP_FREE TF WHERE country = 'USA' ORDER BY TF.created DESC LIMIT 1", sqlEngine)
 
 last_date_day = format(last_date['created'][0])
 

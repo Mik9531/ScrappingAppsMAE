@@ -1,25 +1,20 @@
 # coding=utf8
-import json
 
 import dash
 import dash_bootstrap_components as dbc
-import flask
+import pandas as pd
 # import pandas as pd
-from dash import dash_table
+from dash import dash_table, callback
 from dash import dcc, html, Input, Output
 from dash_iconify import DashIconify
 from sqlalchemy import create_engine
 
-# from app import application, last_date, init_date, titles_apps, titles_apps_list
-# from app import pd
-
-
-
-init_date = init_date['created'].values[0]
-last_date = last_date['created'].values[0]
+from querys import titles_apps_list, titles_apps
 
 # ------------------------------------------------------------------------------
 # App layout
+
+dash.register_page(__name__, path='/apps')
 
 layout = html.Div([
 
@@ -407,7 +402,7 @@ layout = html.Div([
 # ------------------------------------------------------------------------------
 # Conectamos los graficos Plotly con los componentes Dash
 
-@application.callback(
+@callback(
 
     [Output('output_img', 'src'),
      Output('output_tech_img', 'src'),
@@ -433,10 +428,8 @@ layout = html.Div([
 
 )
 def update_graph(app_selected):
-    global rowsPermit
+    global rowsPermit, programmingLanguageImg, released
     global rowsTitles
-
-    from index import titles_apps
 
     titles_apps_drop = [
         {"label": str(i['title']), "value": i['appId']} for i in
