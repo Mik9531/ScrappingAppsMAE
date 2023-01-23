@@ -1,6 +1,6 @@
-from app import app
+import app.app as application
 
-server = app.server
+app = application.app
 
 if __name__ == '__main__':
-    app.server.run(debug=False, host='0.0.0.0', port=8080)
+    app.run(debug=False, host='0.0.0.0', port=8080)

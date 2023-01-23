@@ -1,19 +1,20 @@
 # coding=utf8
 import dash
-from dash import dcc, html, Input, Output, callback, Dash
 import dash_bootstrap_components as dbc
+from dash import dcc, html
 from dash_iconify import DashIconify
 
-app = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=True, eager_loading=True,
-                update_title='Actualizando...', prevent_initial_callbacks=False,
-                external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
-                meta_tags=[{'name': 'viewport',
-                            'content': 'width=device-width, initial-scale=1'}]
-                )
-server = app.server
+application = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=True, eager_loading=True,
+                        update_title='Actualizando...', prevent_initial_callbacks=False,
+                        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
+                        meta_tags=[{'name': 'viewport',
+                                    'content': 'width=device-width, initial-scale=1'}]
+                        )
+
+app = application.server
 
 # Layout
-app.layout = html.Div(
+application.layout = html.Div(
     [
         dcc.Location(id='url', refresh=False),
 
@@ -79,5 +80,5 @@ app.layout = html.Div(
 
     ])
 
-if __name__ == '__main__':
-    app.run_server(debug=False, host='0.0.0.0', port=8080)
+# if __name__ == '__main__':
+#     application.run_server(debug=False, host='0.0.0.0', port=8080)

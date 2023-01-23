@@ -1,18 +1,24 @@
 # coding=utf8
+import time
+
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # ------------------------------------------------------------------------------
 
-print("Entro en querys")
+start_time = time.time()
 
 limit_table_top = " WHERE TG.created BETWEEN '2023-01-01' AND '2023-03-13' ORDER BY TG.country "
-limit_table_apps = " LIMIT 50 "
+limit_table_apps = " LIMIT 10000 "
 
 sqlEngine = create_engine(
     'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
 
 dbConnection = sqlEngine.connect()
+
+titles_apps_list = pd.read_sql(
+    "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table_apps
+    , con=dbConnection)
 
 titles_apps_list = pd.read_sql(
     "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table_apps
@@ -42,6 +48,14 @@ top_grossing_apps = pd.read_sql(
     "= "
     "TG.appId)" + limit_table_top, con=dbConnection)
 
+allTechs = pd.read_sql(
+    "SELECT appId,programmingLanguage from APPS WHERE programmingLanguage != 'None' AND programmingLanguage != '' AND programmingLanguage != 'Desconocido' ORDER BY maxInstalls DESC" + limit_table_apps,
+    sqlEngine).to_dict(orient='records')
+
+allReviews = pd.read_sql(
+    "SELECT appId from REVIEWS" + limit_table_apps,
+    sqlEngine).to_dict(orient='records')
+
 last_date_day = format(last_date_data['created'][0])
 
 init_date = init_date['created'].values[0]
@@ -61,5 +75,7 @@ top10Grossing_apps = pd.read_sql(
     "SELECT  TG.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `GROSSING` TG INNER JOIN APPS A ON A.appId = TG.appId WHERE country = 'ALA' AND TG.CREATED = %s GROUP BY TG.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine)
+
+print("Carga de tablas realizada correctamente en %s segundos " % (time.time() - start_time))
 
 dbConnection.close()

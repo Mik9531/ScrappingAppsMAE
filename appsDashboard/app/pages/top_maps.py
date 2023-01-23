@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dash import dcc, html, Input, Output, callback
 
-from app.querys import titles_apps, top_grossing_apps, top_paid_apps, top_free_apps, init_date, last_date
+from querys import titles_apps, top_grossing_apps, top_paid_apps, top_free_apps, init_date, last_date
 
 # ------------------------------------------------------------------------------
 # App layout

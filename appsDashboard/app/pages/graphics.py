@@ -1,12 +1,12 @@
 # coding=utf8
 import dash
-from sqlalchemy import create_engine
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import dcc, html, Input, Output, callback
-import dash_daq as daq
-import pandas as pd
+
+from querys import titles_apps, allTechs, allReviews
 
 # ------------------------------------------------------------------------------
 # Graphics layout
@@ -132,97 +132,40 @@ layout = html.Div([
 
 )
 def update_graph(fieldDropdown):
-    global titles_apps, contApps, contReviews, contTechs, loading
+    global loading, contApps, contReviews
 
-    trigger_component_id = dash.callback_context.triggered[0]["prop_id"].split(".")[
-        0]  # Comprobamos si es la primera vez que entra
+    contApps = len(titles_apps)
 
-    limit_table_apps = " "
+    contReviews = len(allReviews)
 
-    if len(trigger_component_id) == 0:
-        sqlEngine = create_engine(
-            'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
+    contTechs = len(allTechs)
 
-        dbConnection = sqlEngine.connect()
+    dffPie = titles_apps.copy()
+    #
+    dffPie = [i for i in dffPie if i['programmingLanguage'] is not None and i['programmingLanguage'] != '']
+    #
+    for app in dffPie:
 
-        titles_apps = pd.read_sql(
-            "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC",
-            con=dbConnection).to_dict(orient='records')
+        if app['genreId'] is not None:
+            if 'GAME' in app['genreId']:
+                app['genre'] = 'Juego'
 
-        contApps = len(titles_apps)
+    figPie = px.pie(dffPie, names=fieldDropdown
+                    )
 
-        allReviews = pd.read_sql(
-            "SELECT appId from REVIEWS" + limit_table_apps,
-            sqlEngine).to_dict(orient='records')
+    figPie.update_traces(textposition='inside', textinfo='label+value+percent',
+                         hovertemplate="Valor:%{label} <br>Num: %{value} </br>Porcentaje: %{percent}"
+                         )
+    figPie.update_layout(height=600,
+                         margin=dict(
+                             l=40,
+                             r=120,
+                             b=50,
+                             t=50,
+                         ),
+                         xaxis=dict(domain=[0, 0.1]))
 
-        contReviews = len(allReviews)
+    figPie = go.Figure(figPie)
 
-        allTechs = pd.read_sql(
-            "SELECT appId,programmingLanguage from APPS WHERE programmingLanguage != 'None' AND programmingLanguage != '' " + limit_table_apps,
-            sqlEngine).to_dict(orient='records')
-
-        contTechs = len(allTechs)
-
-        dbConnection.close()
-
-        dffPie = titles_apps.copy()
-
-        dffPie = [i for i in dffPie if i['programmingLanguage'] is not None and i['programmingLanguage'] != '']
-
-        for app in dffPie:
-
-            if app['genreId'] is not None:
-                if 'GAME' in app['genreId']:
-                    app['genre'] = 'Juego'
-
-        figPie = px.pie(dffPie, names=fieldDropdown
-                        )
-
-        figPie.update_traces(textposition='inside', textinfo='label+value+percent',
-                             hovertemplate="Valor:%{label} <br>Num: %{value} </br>Porcentaje: %{percent}"
-                             )
-        figPie.update_layout(height=600,
-                             margin=dict(
-                                 l=40,
-                                 r=120,
-                                 b=50,
-                                 t=50,
-                             ),
-                             xaxis=dict(domain=[0, 0.1]))
-
-        figPie = go.Figure(figPie)
-
-        loading = ''
-
-    else:
-
-        dffPie = titles_apps.copy()
-        #
-        dffPie = [i for i in dffPie if i['programmingLanguage'] is not None and i['programmingLanguage'] != '']
-        #
-        for app in dffPie:
-
-            if app['genreId'] is not None:
-                if 'GAME' in app['genreId']:
-                    app['genre'] = 'Juego'
-
-        figPie = px.pie(dffPie, names=fieldDropdown
-                        )
-
-        figPie.update_traces(textposition='inside', textinfo='label+value+percent',
-                             hovertemplate="Valor:%{label} <br>Num: %{value} </br>Porcentaje: %{percent}"
-                             )
-        figPie.update_layout(height=600,
-                             margin=dict(
-                                 l=40,
-                                 r=120,
-                                 b=50,
-                                 t=50,
-                             ),
-                             xaxis=dict(domain=[0, 0.1]))
-
-        figPie = go.Figure(figPie)
-
-        # loading = ''
-
+    loading = ''
     return figPie, loading, contApps, contReviews, contTechs

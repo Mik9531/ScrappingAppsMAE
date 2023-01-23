@@ -9,7 +9,7 @@ from dash import dcc, html, Input, Output
 from dash_iconify import DashIconify
 from sqlalchemy import create_engine
 
-from app.querys import titles_apps_list, titles_apps
+from querys import titles_apps_list, titles_apps
 
 # ------------------------------------------------------------------------------
 # App layout

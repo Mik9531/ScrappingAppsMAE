@@ -12,7 +12,6 @@ from google_play_scraper import app, permissions, reviews
 
 dash.register_page(__name__, path='/userApp')
 
-print('/userApp')
 
 layout = html.Div([
 
