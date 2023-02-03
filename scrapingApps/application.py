@@ -15,6 +15,7 @@ import undetected_chromedriver as uc
 import cloudscraper
 from pathlib import Path
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 
 scraper = cloudscraper.create_scraper()
 
@@ -281,7 +282,7 @@ def my_link():
 
         try:
 
-            driver = webdriver.Chrome(options=options)
+            driver = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver', options=options)
 
             TOP_FREE = []
             TOP_GROSSING = []
