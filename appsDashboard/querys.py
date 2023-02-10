@@ -9,12 +9,32 @@ from sqlalchemy import create_engine, text
 start_time = time.time()
 
 limit_table_top = " WHERE TG.created BETWEEN '2023-01-01' AND '2023-03-13' ORDER BY TG.country "
-limit_table_apps = " LIMIT 10000 "
+limit_table_apps = " LIMIT 1000 "
 
 sqlEngine = create_engine(
     'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
 
 dbConnection = sqlEngine.connect()
+
+# Aplicaciones para gráficas
+df = pd.read_sql(
+    "SELECT programmingLanguage, adSupported,androidVersionText,contentRating,created,developer,editorsChoice,free,genre,installs,maxInstalls,price,ratings,updated,released,reviews,score from APPS A ORDER BY A.maxInstalls DESC" + limit_table_apps,
+    con=dbConnection)
+
+# Cambiamos el nombre de las columnas
+
+df = df.rename(columns={'adSupported': 'Contiene Anuncios', 'androidVersionText': 'Versión Android',
+                        'appId': 'ID Aplicación', 'contentRating': 'Calificación de contenido',
+                        'created': 'Creado', 'programmingLanguage': 'Lenguaje de programación',
+                        'developer': 'Desarrollador', 'editorsChoice': 'Elección de los editores',
+                        'free': 'Gratuito', 'genre': 'Genero',
+                        'installs': 'Instalaciones máximas', 'icon': 'Icono',
+                        'maxInstalls': 'Instalaciones', 'price': 'Precio',
+                        'ratings': 'Valoraciones', 'updated': 'Actualizado',
+                        'released': 'Publicado', 'reviews': 'Reseñas',
+                        'score': 'Puntuación'})
+
+dataGraphs = pd.concat([df.columns.to_frame().T, df], ignore_index=True).values.tolist()
 
 titles_apps_list = pd.read_sql(
     "SELECT * from APPS A GROUP BY A.appId ORDER BY A.maxInstalls DESC" + limit_table_apps
