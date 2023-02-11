@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html, Output, Input, State
 from dash_iconify import DashIconify
 
-application = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=False, eager_loading=False,
+application = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=False, eager_loading=True,
                         update_title='Actualizando...', prevent_initial_callbacks=False,
                         external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
                         meta_tags=[
@@ -26,79 +26,58 @@ navLinks = dbc.Nav(
     ],
 ),
 
-PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
-
-search_bar = dbc.Row(
-    [
-        dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        dbc.Col(
-            dbc.Button(
-                "Search", color="primary", className="ms-2", n_clicks=0
-            ),
-            width="auto",
-        ),
-    ],
-    className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
-    align="center",
-)
-
 # Layout
 application.layout = html.Div(
     [
         dcc.Location(id='url', refresh=False),
 
         dbc.Navbar(
-            dbc.Container(
-                [
-                    html.A(
-                        dbc.Row(
-                            dbc.Col(dbc.NavbarBrand("Analytics", className="ms-2")),
-                            align="center",
-                            className="g-0",
-                        ),
-                        href="/",
-                        style={"textDecoration": "none"},
-                    ),
-                    dbc.Row(
-                        [
-                            dbc.NavbarToggler(id="navbar-toggler"),
-                            dbc.Collapse(
-                                dbc.Nav(
-                                    [
-                                        dbc.NavItem(dbc.NavLink("Home")),
-                                        dbc.NavItem(dbc.NavLink("Page 1")),
-                                        dbc.NavItem(
-                                            dbc.NavLink("Page 2"),
-                                            # add an auto margin after page 2 to
-                                            # push later links to end of nav
-                                            className="me-auto",
-                                        ),
-                                        dbc.NavItem(dbc.NavLink("Help")),
-                                        dbc.NavItem(dbc.NavLink("About")),
-                                        dbc.DropdownMenu(
-                                            [
-                                                dbc.DropdownMenuItem("Home"),
-                                                dbc.DropdownMenuItem("Some Long Item"),
-                                            ],
-                                            class_name="mr-1",
-                                            label="Menu",
-                                        ),
-                                    ],
-                                    # make sure nav takes up the full width for auto
-                                    # margin to get applied
-                                    className="w-100",
+            children=[
+                dbc.Container(
+                    [
+                        html.A(
+                            dbc.Row(
+                                dbc.Col(DashIconify(
+                                    icon="carbon:dashboard-reference", color="white",
+                                    width=40,
+                                    height=40,
+                                    className="icon"
                                 ),
-                                id="navbar-collapse",
-                                is_open=False,
-                                navbar=True,
+                                ),
                             ),
-                        ],
-                        # the row should expand to fill the available horizontal space
-                        className="flex-grow-1",
-                    ),
-                ],
-                fluid=True,
-            ),
+
+                            href="/",
+
+                        ),
+                        html.A(
+                            dbc.Row(
+                                dbc.Col(dbc.NavbarBrand("Google Play Analytics Panel")),
+                                align="center",
+                            ),
+                            href="/",
+                            style={"textDecoration": "none"},
+                            className='homeText'
+
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+                                dbc.Collapse(
+                                    navLinks,
+                                    id="navbar-collapse",
+                                    is_open=False,
+                                    navbar=True,
+                                    className='links',
+
+                                ),
+                            ],
+                        ),
+
+                    ],
+                    className="topnav",
+
+                    fluid=True,
+                )],
             dark=True,
             color="dark",
         ),
