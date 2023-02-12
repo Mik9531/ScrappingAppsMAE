@@ -16,6 +16,25 @@
 
 @media screen and (max-width: 850px) {
 
+    .footerDiv {
+        background-color: darkblue;
+        position: relative;
+        justify-content: center;
+        flex-direction: column;
+        min-height: 45px;
+    }
+
+    .Email {
+        position: relative;
+        justify-content: center;
+        flex-direction: column;
+        min-height: 45px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3; /* number of lines to show */
+        line-clamp: 3;
+    }
+
 
     .homeText {
         position: relative;

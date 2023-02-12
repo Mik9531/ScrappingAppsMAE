@@ -117,8 +117,8 @@ application.layout = html.Div(
                                     }
                                 ),
 
-                                html.P('Email: miguel.afanespinosa@alum.uca.es',
-                                       style={'color': 'white', 'textAlign': 'center'}),
+                                html.P('Email: miguel.afanespinosa@ alum.uca.es',
+                                       style={'color': 'white', 'textAlign': 'center'}, className="Email"),
 
                                 html.P('Dirección: Av. Universidad de Cádiz, 10, 11519 Puerto Real, Cádiz',
                                        style={'color': 'white', 'textAlign': 'center'}),
@@ -137,10 +137,12 @@ application.layout = html.Div(
                         'backgroundColor': 'rgba(0, 0, 0, 0.84)',
                         'padding': '10px'
                     }
-
                 )
+
             ]
+            , className="footerDiv"
         )
+
     ])
 
 
