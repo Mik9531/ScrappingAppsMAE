@@ -133,7 +133,6 @@ application.layout = html.Div(
                         ),
 
                     ],
-                    className="footerDiv",
                     style={
                         'backgroundColor': 'rgba(0, 0, 0, 0.84)',
                         'padding': '10px'
