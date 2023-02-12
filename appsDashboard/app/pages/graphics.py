@@ -37,7 +37,7 @@ layout = html.Div([
                                     ),
                                     className="cards"
 
-                                ), width={'size': 4, "offset": 0, 'order': 1}
+                                ),
                             ),
                             dbc.Col(
                                 dbc.Card(
@@ -53,7 +53,7 @@ layout = html.Div([
                                     ),
                                     className="cards"
 
-                                ), width={'size': 4, "offset": 0, 'order': 2}
+                                ),
                             ),
                             dbc.Col(
                                 dbc.Card(
@@ -69,8 +69,9 @@ layout = html.Div([
                                     ),
                                     className="cards"
 
-                                ), width={'size': 4, "offset": 0, 'order': 3}
-                            )]),
+                                ),
+                            )], className='justifyRelative'
+                    ),
                     dbc.Card(
                         dbc.CardBody(
                             [
@@ -86,7 +87,9 @@ layout = html.Div([
                                         aggregatorName="Count",
                                         cols=['Instalaciones máximas']
                                     ),
-                                ]),
+                                ], className='justifyRelative', style={'overflowX': 'auto'}
+
+                                ),
                                 dcc.Loading(
                                     id="loading-3",
                                     type="default",
@@ -94,7 +97,7 @@ layout = html.Div([
                                     fullscreen=True
 
                                 ),
-                            ],
+                            ], className='justifyRelative'
 
                         ),
                         className="cards"
@@ -114,14 +117,11 @@ layout = html.Div([
 
                 ],
 
-                width={'size': 12, "offset": 0, 'order': 0}
-
             ),
-        ]
+        ], className='justifyRelative'
     ),
 
 ])
-
 
 # ------------------------------------------------------------------------------
 # Conectamos los graficos Plotly con los componentes Dash
