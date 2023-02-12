@@ -30,7 +30,7 @@
 #                                 [
 #
 #                                     html.P("Selecciona la aplicación:", className="card-title",
-#                                            style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
+#                                            ),
 #                                     dcc.Dropdown(id="slct_app",
 #
 #                                                  multi=False,
@@ -38,7 +38,6 @@
 #                                                  optionHeight=40,
 #                                                  placeholder='Selecciona...',
 #                                                  clearable=False,
-#                                                  style={'width': "100%"}
 #
 #                                                  ),
 #                                     dcc.Loading(
@@ -63,7 +62,7 @@
 #                                         dbc.Col(
 #
 #                                             html.Img(id='output_img', height='350px', width='350px', className="img",
-#                                                      style={'text-align-last': 'center'}),
+#                                                      ),
 #
 #                                         ),
 #
@@ -96,9 +95,8 @@
 #                             className="cards",
 #                             style={'text-align-last': 'center'}
 #                         )
-#                     ]
+#                     ], className='justifyRelative'
 #                 ),
-#                 width={'size': 4, "offset": 0, 'order': 0}
 #             ),
 #             dbc.Col(dbc.Card(
 #                 dbc.CardBody(
@@ -217,7 +215,6 @@
 #
 #                                 ],
 #
-#                                 width={'size': 6, "offset": 0, 'order': 0}
 #                             ),
 #                             dbc.Col(
 #                                 [
@@ -313,20 +310,18 @@
 #
 #                                 ],
 #
-#                                 width={'size': 6, "offset": 0, 'order': 0}
 #                             )
 #
-#                         ],
+#                         ], className='justifyRelative',
 #
 #                         )
-#                     ]
+#                     ], className='justifyRelative'
 #                 ),
 #                 className="cards"
 #
 #             ),
-#                 width={'size': 8, "offset": 0, 'order': 2}
 #             ),
-#         ]
+#         ], className='justifyRelative'
 #     ),
 #
 #     dbc.Card(
@@ -352,6 +347,8 @@
 #                             {'name': 'SMS', 'id': 'SMS'},
 #                             {'name': 'Identidad', 'id': 'Identity'},
 #                         ],
+#                         style_table={'overflowX': 'auto'},
+#
 #                         style_header={
 #                             'backgroundColor': 'rgb(210, 210, 210)',
 #                             'color': 'black',
@@ -387,9 +384,9 @@
 #                         style_cell={'textAlign': 'center'},
 #                         data=[{'rowsReviews': i} for i in range(1)],
 #                         editable=False,
+#                         style_table={'overflowX': 'auto'},
 #                         style_data={
 #                             'whiteSpace': 'normal',
-#                             'height': 'auto',
 #                         },
 #                         style_header={
 #                             'backgroundColor': 'rgb(210, 210, 210)',
@@ -401,7 +398,7 @@
 #                                 'if': {'row_index': 'odd'},
 #                                 'backgroundColor': '#F5F5F5',
 #                             }],
-#                     ), )
+#                     ), className='img')
 #             ]))
 #
 # ])

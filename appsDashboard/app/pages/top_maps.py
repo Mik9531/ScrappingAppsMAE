@@ -90,7 +90,7 @@
 #                     )],
 #
 #             ),
-#         ], className='maps', style={'textAlign': 'center'},
+#         ], className='justifyRelative', style={'textAlign': 'center'},
 #     ),
 #
 # ])

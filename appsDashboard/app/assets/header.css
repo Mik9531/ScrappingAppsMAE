@@ -58,7 +58,7 @@
         text-align: left;
     }
 
-    .maps {
+    .justifyRelative {
         position: relative;
         justify-content: center;
         flex-direction: column;
