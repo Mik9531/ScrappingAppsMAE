@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, text
 start_time = time.time()
 
 limit_table_top = " WHERE TG.created BETWEEN '2023-02-01' AND '2023-03-13' ORDER BY TG.country "
+limit_table_top = " WHERE TG.created BETWEEN '2023-02-01' AND '2023-02-02' ORDER BY TG.country "
 limit_table_apps = " LIMIT 10 "
 
 sqlEngine = create_engine(
@@ -95,6 +96,8 @@ top10Grossing_apps = pd.read_sql(
     "SELECT  TG.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `GROSSING` TG INNER JOIN APPS A ON A.appId = TG.appId WHERE country = 'ALA' AND TG.CREATED = %s GROUP BY TG.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine)
+
+
 
 print("Carga de tablas realizada correctamente en %s segundos " % (time.time() - start_time))
 

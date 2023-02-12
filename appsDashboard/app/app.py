@@ -5,15 +5,17 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html, Output, Input, State
 from dash_iconify import DashIconify
 
-enablePages = True,
+enablePages = False
+# container = dash.page_container
+container = None
 
 application = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=enablePages, eager_loading=True,
                         update_title='Actualizando...', prevent_initial_callbacks=False,
-                        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME,
-                                              'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'],
+                        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME
+                                              ],
                         meta_tags=[
-                            {'name': 'viewport',
-                             'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=0.5,'}
+                            # {'name': 'viewport',
+                            #  'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=0.5,'}
                         ]
                         )
 
@@ -85,7 +87,7 @@ application.layout = html.Div(
             color="dark",
         ),
 
-        dash.page_container,
+        container,
 
         html.Div(id='page-content', className="page-content"),
 
@@ -94,38 +96,49 @@ application.layout = html.Div(
             children=[
                 html.Div(
                     children=[
-                        html.P(
-                            'Copyright © 2023 Miguel Afán Espinosa',
-                            style={
-                                'textAlign': 'center',
-                                'color': 'white',
-                            }
-                        ),
-                        html.Br(),
-                        html.P(
-                            'Contacto',
-                            style={
-                                'color': 'white',
-                                'textAlign': 'center',
-                                'marginTop': '15px'
-                            }
-                        ),
-                        html.Div(
-                            children=[
-                                html.P('Email: miguel.afanespinosa@alum.uca.es', style={'color': 'white'}),
+                        dbc.Row([
+                            dbc.Col(
+                                html.P(
+                                    '© 2023 Miguel Afán Espinosa',
+                                    style={
+                                        'textAlign': 'center',
+                                        'color': 'white',
+                                    }
+                                ),
+                                width=6
+                            ),
+                            dbc.Col([
+                                html.P(
+                                    'Contacto:',
+                                    style={
+                                        'color': 'white',
+                                        'textAlign': 'center',
+                                        'marginTop': '5px'
+                                    }
+                                ),
+
+                                html.P('Email: miguel.afanespinosa@alum.uca.es',
+                                       style={'color': 'white', 'textAlign': 'center'}),
+
                                 html.P('Dirección: Av. Universidad de Cádiz, 10, 11519 Puerto Real, Cádiz',
-                                       style={'color': 'white'})
+                                       style={'color': 'white', 'textAlign': 'center'}),
+
                             ],
-                            style={
-                                'textAlign': 'center',
-                                'marginTop': '15px'
-                            }
-                        )
+
+                                width=6
+                            ),
+
+                        ]
+
+                        ),
+
                     ],
+                    className="footerDiv",
                     style={
-                        'backgroundColor': 'rgba(0, 0, 0, 0.89)',
-                        'padding': '30px'
+                        'backgroundColor': 'rgba(0, 0, 0, 0.84)',
+                        'padding': '10px'
                     }
+
                 )
             ]
         )
