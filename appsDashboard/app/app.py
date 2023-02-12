@@ -5,9 +5,12 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html, Output, Input, State
 from dash_iconify import DashIconify
 
-application = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=False, eager_loading=True,
+enablePages = True,
+
+application = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=enablePages, eager_loading=True,
                         update_title='Actualizando...', prevent_initial_callbacks=False,
-                        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
+                        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME,
+                                              'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'],
                         meta_tags=[
                             {'name': 'viewport',
                              'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=0.5,'}
@@ -40,7 +43,7 @@ application.layout = html.Div(
                                 dbc.Col(DashIconify(
                                     icon="carbon:dashboard-reference", color="white",
                                     width=40,
-                                    height=40,
+                                    height=30,
                                     className="icon"
                                 ),
                                 ),
@@ -82,19 +85,54 @@ application.layout = html.Div(
             color="dark",
         ),
 
-        # dash.page_container,
+        dash.page_container,
 
         html.Div(id='page-content', className="page-content"),
 
-        html.Div(className="footerStyle"),
-
+        # footer
+        html.Footer(
+            children=[
+                html.Div(
+                    children=[
+                        html.P(
+                            'Copyright © 2023 Miguel Afán Espinosa',
+                            style={
+                                'textAlign': 'center',
+                                'color': 'white',
+                            }
+                        ),
+                        html.Br(),
+                        html.P(
+                            'Contacto',
+                            style={
+                                'color': 'white',
+                                'textAlign': 'center',
+                                'marginTop': '15px'
+                            }
+                        ),
+                        html.Div(
+                            children=[
+                                html.P('Email: miguel.afanespinosa@alum.uca.es', style={'color': 'white'}),
+                                html.P('Dirección: Av. Universidad de Cádiz, 10, 11519 Puerto Real, Cádiz',
+                                       style={'color': 'white'})
+                            ],
+                            style={
+                                'textAlign': 'center',
+                                'marginTop': '15px'
+                            }
+                        )
+                    ],
+                    style={
+                        'backgroundColor': 'rgba(0, 0, 0, 0.89)',
+                        'padding': '30px'
+                    }
+                )
+            ]
+        )
     ])
 
-if __name__ == '__main__':
-    application.run_server(debug=True, host='0.0.0.0', port=8080)
 
-
-@dash.callback(
+@application.callback(
     Output("navbar-collapse", "is_open"),
     [Input("navbar-toggler", "n_clicks")],
     [State("navbar-collapse", "is_open")],
@@ -103,3 +141,7 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
+
+if __name__ == '__main__':
+    application.run_server(debug=True, host='0.0.0.0', port=8080)

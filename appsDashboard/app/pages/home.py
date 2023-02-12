@@ -15,7 +15,6 @@ cont_list_top_grossing_apps = len(top10Grossing_apps)
 
 dash.register_page(__name__, path='/')
 
-
 for i in range(cont_list_top_paid_apps):
     output_cards_paid.append(dbc.Card(
         [
@@ -83,7 +82,6 @@ for i in range(cont_list_top_grossing_apps):
         ],
 
     ))
-
 
 layout = html.Div([
 
