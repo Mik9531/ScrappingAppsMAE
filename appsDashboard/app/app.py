@@ -5,17 +5,17 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html, Output, Input, State
 from dash_iconify import DashIconify
 
-enablePages = False
-# container = dash.page_container
-container = None
+enablePages = True
+container = dash.page_container
+# container = None
 
 application = dash.Dash(__name__, suppress_callback_exceptions=True, use_pages=enablePages, eager_loading=True,
                         update_title='Actualizando...', prevent_initial_callbacks=False,
                         external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME
                                               ],
                         meta_tags=[
-                            # {'name': 'viewport',
-                            #  'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=0.5,'}
+                            {'name': 'viewport',
+                             'content': 'width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=0.5,'}
                         ]
                         )
 
@@ -56,7 +56,7 @@ application.layout = html.Div(
                         ),
                         html.A(
                             dbc.Row(
-                                dbc.Col(dbc.NavbarBrand("Google Play Analytics Panel")),
+                                dbc.Col(dbc.NavbarBrand("Google Play Data Analytics Panel")),
                                 align="center",
                             ),
                             href="/",
