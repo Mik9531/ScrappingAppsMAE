@@ -21,6 +21,7 @@
         justify-content: center;
         flex-direction: column;
         min-height: 45px;
+        width: 100%;
     }
 
     .Email {
@@ -68,14 +69,22 @@
 
 }
 
+.container {
+    font-size: medium;
+    width: 1400px;
 
-body {
-    background-color: #eeeeee;
+}
+
+
+.body {
+    background-color: #eaeaea;
+    font-size: 14px;
+    line-height: 18px;
 
 }
 
 .home {
-    min-width: 95%;
+    min-width: 700%;
 }
 
 .hr {
@@ -196,6 +205,8 @@ body {
 /* Add a black background color to the top navigation */
 .topnav {
     overflow: hidden;
+    width: 100%;
+
 }
 
 /* Style the links inside the navigation bar */
@@ -322,6 +333,12 @@ body {
     -webkit-line-clamp: 3; /* number of lines to show */
     line-clamp: 3;
     overflow: visible
+}
+
+.footerDiv {
+    width: 100%;
+    padding: 3px;
+    margin: 10px;
 }
 
 

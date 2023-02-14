@@ -88,20 +88,23 @@ layout = html.Div([
     dbc.Row(
         [
             dbc.Col(
-                dbc.Carousel(
-                    items=[
-                        {
-                            "key": i['position'],
-                            "src": i['icon'],
-                            "caption": i['title'],
-                            "img_style": {"max-height": "450px", "max-width": "1300px"},
-                            "caption_class_name": 'caption'
-                        } for i in top10Free_apps
+                dbc.Card(
 
-                    ], interval=5000,
-                    ride="carousel",
-                    className="slider"
-                ),
+                    dbc.Carousel(
+                        items=[
+                            {
+                                "key": i['position'],
+                                "src": i['icon'],
+                                "caption": i['title'],
+                                "img_style": {"max-height": "450px", "max-width": "1300px"},
+                                "caption_class_name": 'caption'
+                            } for i in top10Free_apps
+
+                        ], interval=5000,
+                        ride="carousel",
+                        className="slider"
+                    ),
+                ), className="cards",
             ),
 
             dbc.Col(
@@ -122,7 +125,7 @@ layout = html.Div([
                                     "Última fecha de actualización: "),
 
                                 html.Div(id='date_home', children=[]),
-                            ], className='justifyRelative'
+                            ], className=''
                             ), className="cards",
                         )
 

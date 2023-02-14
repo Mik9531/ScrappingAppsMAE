@@ -34,116 +34,122 @@ navLinks = dbc.Nav(
 # Layout
 application.layout = html.Div(
     [
-        dcc.Location(id='url', refresh=False),
+        html.Div(
 
-        dbc.Navbar(
-            children=[
-                dbc.Container(
-                    [
-                        html.A(
+            dbc.Navbar(
+                children=[
+                    dbc.Container(
+                        [
+                            html.A(
+                                dbc.Row(
+                                    dbc.Col(DashIconify(
+                                        icon="carbon:dashboard-reference", color="white",
+                                        width=40,
+                                        height=30,
+                                        className="icon"
+                                    ),
+                                    ),
+                                ),
+
+                                href="/",
+
+                            ),
+                            html.A(
+                                dbc.Row(
+                                    dbc.Col(dbc.NavbarBrand("Google Play Data Analytics Panel")),
+                                    align="center",
+                                ),
+                                href="/",
+                                style={"textDecoration": "none"},
+                                className='homeText'
+
+                            ),
                             dbc.Row(
-                                dbc.Col(DashIconify(
-                                    icon="carbon:dashboard-reference", color="white",
-                                    width=40,
-                                    height=30,
-                                    className="icon"
-                                ),
-                                ),
+                                [
+                                    dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+                                    dbc.Collapse(
+                                        navLinks,
+                                        id="navbar-collapse",
+                                        is_open=False,
+                                        navbar=True,
+                                        className='links',
+
+                                    ),
+                                ],
                             ),
 
-                            href="/",
+                        ],
+                        className="topnav",
 
-                        ),
-                        html.A(
-                            dbc.Row(
-                                dbc.Col(dbc.NavbarBrand("Google Play Data Analytics Panel")),
-                                align="center",
-                            ),
-                            href="/",
-                            style={"textDecoration": "none"},
-                            className='homeText'
+                        fluid=True,
+                    )],
+                dark=True,
+                color="dark",
+            ),
 
-                        ),
-                        dbc.Row(
-                            [
-                                dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
-                                dbc.Collapse(
-                                    navLinks,
-                                    id="navbar-collapse",
-                                    is_open=False,
-                                    navbar=True,
-                                    className='links',
-
-                                ),
-                            ],
-                        ),
-
-                    ],
-                    className="topnav",
-
-                    fluid=True,
-                )],
-            dark=True,
-            color="dark",
         ),
 
-        container,
+        html.Div(
 
-        html.Div(id='page-content', className="page-content"),
+            container, className='container'
 
-        # footer
-        html.Footer(
-            children=[
-                html.Div(
-                    children=[
-                        dbc.Row([
-                            dbc.Col(
-                                html.P(
-                                    '© 2023 Miguel Afán Espinosa',
-                                    style={
-                                        'textAlign': 'center',
-                                        'color': 'white',
-                                    }
+        ),
+        html.Div(
+            # footer
+            html.Footer(
+                children=[
+                    html.Div(
+                        children=[
+                            dbc.Row([
+                                dbc.Col(
+                                    html.P(
+                                        '© 2023 Miguel Afán Espinosa',
+                                        style={
+                                            'textAlign': 'center',
+                                            'color': 'white',
+                                        }
+                                    ),
+                                    width=6
                                 ),
-                                width=6
-                            ),
-                            dbc.Col([
-                                html.P(
-                                    'Contacto:',
-                                    style={
-                                        'color': 'white',
-                                        'textAlign': 'center',
-                                        'marginTop': '5px'
-                                    }
+                                dbc.Col([
+                                    html.P(
+                                        'Contacto:',
+                                        style={
+                                            'color': 'white',
+                                            'textAlign': 'center',
+                                            'marginTop': '5px'
+                                        }
+                                    ),
+
+                                    html.P('Email: miguel.afanespinosa@ alum.uca.es',
+                                           style={'color': 'white', 'textAlign': 'center'}, className="Email"),
+
+                                    html.P('Dirección: Av. Universidad de Cádiz, 10, 11519 Puerto Real, Cádiz',
+                                           style={'color': 'white', 'textAlign': 'center'}),
+
+                                ],
+
+                                    width=6
                                 ),
 
-                                html.P('Email: miguel.afanespinosa@ alum.uca.es',
-                                       style={'color': 'white', 'textAlign': 'center'}, className="Email"),
+                            ]
 
-                                html.P('Dirección: Av. Universidad de Cádiz, 10, 11519 Puerto Real, Cádiz',
-                                       style={'color': 'white', 'textAlign': 'center'}),
-
-                            ],
-
-                                width=6
                             ),
 
-                        ]
+                        ],
+                        style={
+                            'backgroundColor': 'rgba(0, 0, 0, 0.84)',
+                            'padding': '10px'
+                        }
+                    )
 
-                        ),
-
-                    ],
-                    style={
-                        'backgroundColor': 'rgba(0, 0, 0, 0.84)',
-                        'padding': '10px'
-                    }
-                )
-
-            ]
-            , className="footerDiv"
+                ]
+                , className="footerDiv"
+            )
         )
 
-    ])
+    ], className='body'
+)
 
 
 @application.callback(
