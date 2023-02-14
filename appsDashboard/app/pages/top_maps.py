@@ -22,39 +22,56 @@
 #     dbc.Row(
 #         [
 #
-#             dbc.Col(dbc.Card(
-#                 dbc.CardBody(
+#             dbc.Col(
+#                 dbc.Row(
+#
 #                     [
-#                         html.P("Selecciona la fecha:", className="card-title",
-#                                style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
-#                         # Selector calendario
-#                         dcc.DatePickerSingle(
-#                             id='slct_year',
-#                             initial_visible_month=date(2022, 4, 1),
-#                             display_format='DD/MM/YYYY',
-#                             style={'width': "100%"}
-#                         ),
-#                         dcc.Loading(
-#                             id="loading-2",
-#                             type="default",
-#                             children=html.Div(id="loading-output-maps"),
-#                             fullscreen=True
+#                         dbc.Card(
+#                             dbc.CardBody(
+#                                 [
+#                                     html.P("Selecciona la fecha:", className="card-title",
+#                                            style={'padding-bottom': '15px', 'box-sizing': 'inherit'}),
+#                                     # Selector calendario
+#                                     dcc.DatePickerSingle(
+#                                         id='slct_year',
+#                                         initial_visible_month=date(2022, 4, 1),
+#                                         display_format='DD/MM/YYYY',
+#                                         style={'width': "100%"}
+#                                     ),
+#                                     dcc.Loading(
+#                                         id="loading-2",
+#                                         type="default",
+#                                         children=html.Div(id="loading-output-maps"),
+#                                         fullscreen=True
 #
-#                         ),
+#                                     ),
 #
-#                         html.P("Selecciona la aplicación:", className="card-title",
-#                                style={'padding-bottom': '15px', 'box-sizing': 'inherit', "margin-top": "15px"}),
-#                         dcc.Dropdown(id="slct_app_drop",
-#                                      multi=False,
-#                                      value=None,
-#                                      style={'width': "100%"},
-#                                      placeholder="Selecciona..."
-#                                      ),
+#                                     html.P("Selecciona la aplicación:", className="card-title",
+#                                            style={'padding-bottom': '15px', 'box-sizing': 'inherit',
+#                                                   "margin-top": "15px"}),
+#                                     dcc.Dropdown(id="slct_app_drop",
+#                                                  multi=False,
+#                                                  value=None,
+#                                                  style={'width': "100%"},
+#                                                  placeholder="Selecciona..."
+#                                                  ),
+#
+#                                 ],
+#                             ),
+#                             className="cards"
+#                         ),
+#                         dbc.Card(
+#                             dbc.CardBody([
+#                                 html.Iframe(srcDoc='''
+#                                   <a class="twitter-timeline" href="https://twitter.com/GooglePlay?ref_src=twsrc%5Etfw">Tweets by GooglePlay</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+#                                ''',
+#                                             style={"height": "450px", "width": "100%"})
+#                             ]), className="cards",
+#                         ),
 #
 #                     ]
 #                 ),
-#                 className="cards"
-#             ),
+#
 #             ),
 #             dbc.Col(
 #                 [
