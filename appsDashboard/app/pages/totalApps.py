@@ -83,10 +83,10 @@ layout = html.Div([
 
                                         dbc.Col(
 
-                                            html.Img(id='output_tech_img', height='100px', className="img"
+                                            html.Img(id='output_tech_img', height='100px'
                                                      ),
 
-                                        ), className="imgContainer"
+                                        ),
 
                                     )
 

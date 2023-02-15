@@ -124,7 +124,7 @@ layout = html.Div([
                                 dcc.Markdown(
                                     "Última fecha de actualización: "),
 
-                                html.Div(id='date_home', children=[]),
+                                # html.Div(id='date_home', children=[]),
                             ], className=''
                             ), className="cards",
                         )
