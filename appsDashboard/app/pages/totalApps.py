@@ -57,11 +57,14 @@ layout = html.Div([
                             dbc.CardBody(
                                 [
 
+                                    dbc.CardHeader("Imagen de la aplicación"),
+
                                     dbc.Row(
 
                                         dbc.Col(
 
                                             html.Img(id='output_img', height='350px', width='350px', className="img",
+                                                     style={'margin-top': '10px'}
                                                      ),
 
                                         ),
