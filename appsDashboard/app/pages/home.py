@@ -88,7 +88,8 @@ layout = html.Div([
     dbc.Row(
         [
             dbc.Col(
-                dbc.Card(
+                dbc.Card([
+                    dbc.CardHeader("Top Aplicaciones gratuitas"),
 
                     dbc.Carousel(
                         items=[
@@ -104,36 +105,40 @@ layout = html.Div([
                         ride="carousel",
                         className="slider"
                     ),
-                ), className="cards",
+                ]), className="cards",
             ),
 
             dbc.Col(
-                dbc.Row(
-                    [
-                        dbc.Card(
-                            dbc.CardBody([
-                                dcc.Markdown(
-                                    "En esta aplicación web encontrarás información adicional "
-                                    "sobre las aplicaciones de Google Play, incluidos sus permisos, reseñas, "
-                                    "tecnologías o librerías, disposición en el mundo a través de varios mapas y gráficas analíticas."),
-                                dcc.Markdown(
-                                    "Construido con [Python](https://www.python.org/) y [Dash](https://plotly.com/dash/), esta aplicación provee al usuario un análisis en "
-                                    "profundidad de datos que no podemos obtener en la plataforma de aplicaciones "
-                                    "Android por defecto, Google Play"),
+                [
+                    dbc.Card(
 
-                                dcc.Markdown(
-                                    "Última fecha de actualización: "),
+                        dbc.CardBody([
 
-                                # html.Div(id='date_home', children=[]),
-                            ], className=''
-                            ), className="cards",
-                        )
+                            dcc.Markdown(
+                                "En esta aplicación web encontrarás información adicional "
+                                "sobre las aplicaciones de Google Play, incluidos sus permisos, reseñas, "
+                                "tecnologías o librerías, disposición en el mundo a través de varios mapas y gráficas analíticas."),
+                            dcc.Markdown(
+                                "Construido con [Python](https://www.python.org/) y [Dash](https://plotly.com/dash/), esta aplicación provee al usuario un análisis en "
+                                "profundidad de datos que no podemos obtener en la plataforma de aplicaciones "
+                                "Android por defecto, Google Play."),
 
-                    ], style={'width': '100%'}
+                            html.Div(
+                                children=[
+                                    html.Img(
+                                        src="https://rapids.ai/assets/images/Plotly_Dash_logo.png",
+                                        className="img", height='325px'
+                                    )
+                                ], style={'textAlign': 'center'}
 
-                )
+                            ),
 
-                ,
+                        ], className=''
+                        ), className="cards",
+                    )
+
+                ], style={'width': '100%'}
+
             ),
         ],
         className='justifyRelative'

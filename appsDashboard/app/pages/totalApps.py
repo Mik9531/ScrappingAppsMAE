@@ -364,7 +364,7 @@ layout = html.Div([
                         data=[{'rowsPermit': i} for i in range(1)],
                         editable=False,
                     ))
-            ])),
+            ]), style={'margin-bottom': '10px'}),
 
     dbc.Card(
         dbc.CardBody(
@@ -399,7 +399,7 @@ layout = html.Div([
                                 'backgroundColor': '#F5F5F5',
                             }],
                     ), className='img')
-            ]))
+            ]), style={'margin-bottom': '10px'})
 
 ])
 

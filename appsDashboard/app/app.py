@@ -107,6 +107,7 @@ application.layout = html.Div(
                                         style={
                                             'textAlign': 'center',
                                             'color': 'white',
+                                            'marginTop': '5px'
                                         }
                                     ),
                                     width=6
@@ -139,12 +140,11 @@ application.layout = html.Div(
                         ],
                         style={
                             'backgroundColor': 'rgba(0, 0, 0, 0.84)',
-                            'padding': '10px'
                         }
                     )
 
                 ]
-                , className="footerDiv"
+
             )
         )
 
@@ -164,4 +164,4 @@ def toggle_navbar_collapse(n, is_open):
 
 
 if __name__ == '__main__':
-    application.run_server(debug=True, host='0.0.0.0', port=8080)
+    application.run_server(debug=False, host='0.0.0.0', port=8080)

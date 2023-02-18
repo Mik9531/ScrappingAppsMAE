@@ -8,8 +8,8 @@ from sqlalchemy import create_engine, text
 
 start_time = time.time()
 
-limit_table_top = " WHERE TG.created BETWEEN '2023-01-01' AND '2023-03-13' ORDER BY TG.country "
-limit_table_apps = " LIMIT 100 "
+limit_table_top = " WHERE TG.created BETWEEN '2023-02-01' AND '2023-03-13' ORDER BY TG.country "
+limit_table_apps = " LIMIT 50 "
 
 sqlEngine = create_engine(
     'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
@@ -86,17 +86,17 @@ init_date = init_date['created'].values[0]
 last_date = last_date_data['created'].values[0]
 
 top10Free_apps = pd.read_sql(
-    "SELECT  TF.position, A.title, A.url, A.icon, A.created FROM `TOP_FREE` TF INNER JOIN APPS A ON A.appId = TF.appId WHERE country = 'USA' AND TF.CREATED = %s GROUP BY TF.appId ORDER BY POSITION LIMIT 10",
+    "SELECT  TF.position, A.title, A.url, A.icon, A.created FROM `TOP_FREE` TF INNER JOIN APPS A ON A.appId = TF.appId WHERE country = 'ESP' AND TF.CREATED = %s GROUP BY TF.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine).to_dict(orient='records')
 
 top10Paid_apps = pd.read_sql(
-    "SELECT  TP.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `TOP_PAID` TP INNER JOIN APPS A ON A.appId = TP.appId WHERE country = 'USA' AND TP.CREATED = %s GROUP BY TP.appId ORDER BY POSITION LIMIT 10",
+    "SELECT  TP.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `TOP_PAID` TP INNER JOIN APPS A ON A.appId = TP.appId WHERE country = 'ESP' AND TP.CREATED = %s GROUP BY TP.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine)
 
 top10Grossing_apps = pd.read_sql(
-    "SELECT  TG.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `GROSSING` TG INNER JOIN APPS A ON A.appId = TG.appId WHERE country = 'USA' AND TG.CREATED = %s GROUP BY TG.appId ORDER BY POSITION LIMIT 10",
+    "SELECT  TG.position, A.title, A.url, A.icon, A.created, A.summary, A.score FROM `GROSSING` TG INNER JOIN APPS A ON A.appId = TG.appId WHERE country = 'ESP' AND TG.CREATED = %s GROUP BY TG.appId ORDER BY POSITION LIMIT 10",
     params=[last_date_day],
     con=sqlEngine)
 
