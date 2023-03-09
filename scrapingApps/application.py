@@ -282,7 +282,10 @@ def my_link():
 
         try:
 
-            driver = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver', options=options)
+            # driver = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver', options=options)
+
+            # SOLO LOCAL
+            driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
             TOP_FREE = []
             TOP_GROSSING = []
