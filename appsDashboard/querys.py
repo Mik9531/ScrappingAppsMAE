@@ -8,8 +8,8 @@ from sqlalchemy import create_engine, text
 
 start_time = time.time()
 
-limit_table_top = " WHERE TG.created BETWEEN '2023-02-01' AND '2023-03-13' ORDER BY TG.country "
-limit_table_apps = " LIMIT 50 "
+limit_table_top = " WHERE TG.created BETWEEN '2023-01-01' AND '2023-03-31' ORDER BY TG.country "
+limit_table_apps = " LIMIT 40000 "
 
 sqlEngine = create_engine(
     'mysql+pymysql://root:kalandria@testpy.cxfxcsoe1mdg.us-east-2.rds.amazonaws.com/appsData')
