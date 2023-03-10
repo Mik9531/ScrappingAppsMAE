@@ -76,7 +76,7 @@ def download_apk(actual_apk):
     try:
 
         # browser = uc.Chrome(options=options)
-        browser = uc.Chrome(options=options)
+        browser = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
         sub_dl_links = []
 
@@ -178,7 +178,9 @@ def download_apk(actual_apk):
 
         return output_file
 
-    except Exception:
+
+    except Exception as e:
+        print(e)
         return None
 
 
@@ -533,6 +535,8 @@ def my_link():
 
                             # Si la aplicacion es gratuita...
 
+                            actual_app = 'com.whatsapp.w4b'
+
                             if (app_details['free'] is True):
 
                                 try:
@@ -560,7 +564,7 @@ def my_link():
 
                                         print('Procediendo a la descarga')
 
-                                        id_download = None
+                                        id_download = download_apk(actual_app)
                                         if id_download is not None:
                                             if os.path.exists(id_download):
 
