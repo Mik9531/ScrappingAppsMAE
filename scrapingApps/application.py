@@ -535,8 +535,6 @@ def my_link():
 
                             # Si la aplicacion es gratuita...
 
-                            actual_app = 'com.whatsapp.w4b'
-
                             if (app_details['free'] is True):
 
                                 try:
@@ -564,7 +562,7 @@ def my_link():
 
                                         print('Procediendo a la descarga')
 
-                                        id_download = download_apk(actual_app)
+                                        id_download = None
                                         if id_download is not None:
                                             if os.path.exists(id_download):
 

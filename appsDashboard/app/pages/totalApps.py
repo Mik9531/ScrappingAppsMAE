@@ -480,7 +480,7 @@ def update_graph(app_selected):
         programmingLanguageImg = dff.programmingLanguage.values[0]
 
         if programmingLanguageImg == 'Kotlin':
-            programmingLanguageImg = 'https://www.nicepng.com/png/detail/271-2711435_android-apps-development-by-cloudtrains-technologies-kotlin-logo.png'
+            programmingLanguageImg = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Kotlin_logo.svg/2560px-Kotlin_logo.svg.png'
         elif programmingLanguageImg == 'Java':
             programmingLanguageImg = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSp1rLnnxIth_0GaWjmgbUD0ZygnpBGDAXIDNevsrcrMkSGQRrRU-VvOrIsxlRCkFFL8mo&usqp=CAU'
 

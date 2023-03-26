@@ -126,8 +126,8 @@ layout = html.Div([
                             html.Div(
                                 children=[
                                     html.Img(
-                                        src="https://rapids.ai/assets/images/Plotly_Dash_logo.png",
-                                        className="img", height='325px'
+                                        src="https://dash.vaex.io/assets/dash-logo.png",
+                                        className="img", height='225px'
                                     )
                                 ], style={'textAlign': 'center'}
 
